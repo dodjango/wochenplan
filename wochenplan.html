@@ -9,8 +9,41 @@
 </head>
 
 <body>
-    <div class="container">
-        <h1 id="planTitle">Neuer Wochenplan</h1>
+    <!-- Welcome Screen -->
+    <div id="welcome-screen" class="welcome-screen active">
+        <div class="welcome-card">
+            <h1 class="welcome-title">🗓️ Wochenplan für Kinder</h1>
+            <p class="welcome-description">
+                Erstellen Sie strukturierte Wochenpläne für Ihr Kind mit Schule, Hausaufgaben,
+                Sport und Freizeit-Aktivitäten. Die App hilft Ihnen bei der zeitlichen Organisation
+                und berücksichtigt pädagogische Empfehlungen für eine ausgewogene Wochengestaltung.
+            </p>
+            <div class="welcome-actions">
+                <button class="btn btn-primary btn-large" onclick="createNewPlanFromWelcome()">
+                    📋 Neuen Plan erstellen
+                </button>
+                <button class="btn btn-secondary btn-large" onclick="loadPlanFromWelcome()">
+                    📂 Vorhandenen Plan laden
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="main-app" class="container">
+        <div class="app-header">
+            <div class="logo-title-wrapper">
+                <button class="logo-button" onclick="navigateToWelcome()" title="Zurück zum Start">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </button>
+                <h1 id="planTitle">Neuer Wochenplan</h1>
+            </div>
+        </div>
 
         <div class="controls">
             <button class="btn btn-secondary" onclick="newWeekPlan()">Neuer Plan</button>

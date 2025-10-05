@@ -444,7 +444,8 @@ const defaultActivities = [
 let timeSlots = [];
 
 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
-let scheduledBlocks = {};
+let scheduledBlocks = {}; // Mapping: "day-timeIndex" -> blockId (für Kollisionsprüfung)
+let blockRegistry = {};   // Mapping: blockId -> Block-Objekt (für Datenpersistenz)
 let draggedElement = null;
 let draggedActivity = null;
 let currentDraggedBlock = null;
@@ -468,9 +469,135 @@ function init() {
     loadActivities();
     createActivityBlocks();
     createCalendarGrid();
-    loadWeek();
+
+    // Hash-basierte Navigation initialisieren
+    initNavigation();
+
+    // Hash-Change Listener für Browser-Navigation (Back/Forward)
+    window.addEventListener('hashchange', handleHashChange);
 }
 
+// ========================================
+// Welcome Screen Management (Hash-basiert)
+// ========================================
+
+// Navigation initialisieren
+function initNavigation() {
+    const hash = window.location.hash;
+
+    // Hash hat höchste Priorität
+    if (hash === '#app') {
+        loadWeek();
+        navigateToApp();
+        return;
+    }
+
+    if (hash === '#welcome') {
+        navigateToWelcome();
+        return;
+    }
+
+    // Kein Hash: SessionStorage prüfen (überlebt F5 während Browser-Session)
+    const hasActiveSession = sessionStorage.getItem('planActive') === 'true';
+    if (hasActiveSession) {
+        loadWeek();
+        navigateToApp();
+        return;
+    }
+
+    // Als letztes: LocalStorage prüfen (überlebt Browser-Neustart)
+    if (checkActivePlan()) {
+        loadWeek();
+        navigateToApp();
+        return;
+    }
+
+    // Kein Plan gefunden → Welcome Screen
+    navigateToWelcome();
+}
+
+// Hash-Change Handler für Browser Back/Forward
+function handleHashChange() {
+    const hash = window.location.hash;
+
+    if (hash === '#app') {
+        hideWelcomeScreen();
+    } else if (hash === '#welcome') {
+        showWelcomeScreen();
+    }
+}
+
+// Zur App navigieren
+function navigateToApp() {
+    hideWelcomeScreen();
+    window.location.hash = 'app';
+    sessionStorage.setItem('planActive', 'true');
+}
+
+// Zum Welcome Screen navigieren
+function navigateToWelcome() {
+    showWelcomeScreen();
+    window.location.hash = 'welcome';
+    sessionStorage.removeItem('planActive');
+}
+
+// Prüfen ob ein aktiver Plan vorhanden ist
+function checkActivePlan() {
+    const savedPlan = localStorage.getItem('wochenplan');
+    if (!savedPlan || savedPlan === '{}' || savedPlan === '[]') {
+        return false;
+    }
+
+    // Prüfen ob der Plan tatsächlich Daten enthält
+    try {
+        const data = JSON.parse(savedPlan);
+        return data && Object.keys(data).length > 0;
+    } catch (error) {
+        console.warn('Fehler beim Prüfen des Plans:', error);
+        return false;
+    }
+}
+
+// Willkommensbildschirm anzeigen
+function showWelcomeScreen() {
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const mainApp = document.getElementById('main-app');
+
+    if (welcomeScreen && mainApp) {
+        welcomeScreen.classList.add('active');
+        mainApp.classList.remove('active');
+    }
+}
+
+// Willkommensbildschirm verstecken
+function hideWelcomeScreen() {
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const mainApp = document.getElementById('main-app');
+
+    if (welcomeScreen && mainApp) {
+        welcomeScreen.classList.remove('active');
+        mainApp.classList.add('active');
+    }
+}
+
+// Neuen Plan von Willkommensseite erstellen
+function createNewPlanFromWelcome() {
+    navigateToApp();
+    // Kleine Verzögerung damit die UI Zeit hat zu rendern
+    setTimeout(() => {
+        openAutoFillModal();
+    }, 100);
+}
+
+// Plan von Willkommensseite laden
+function loadPlanFromWelcome() {
+    navigateToApp();
+    setTimeout(() => {
+        loadWeekPlan();
+    }, 100);
+}
+
+// ========================================
 // Zeiteinstellungen laden
 function loadTimeSettings() {
     const saved = localStorage.getItem('timeSettings');
@@ -772,6 +899,9 @@ function addScheduledBlock(day, timeIndex, activity, duration) {
         duration: duration
     };
 
+    // Block in Registry speichern
+    blockRegistry[blockId] = block;
+
     // Zeitslots blockieren
     for (let i = 0; i < durationSlots; i++) {
         const key = `${day}-${timeIndex + i}`;
@@ -779,6 +909,7 @@ function addScheduledBlock(day, timeIndex, activity, duration) {
     }
 
     renderScheduledBlock(block);
+    saveWeek(); // Auto-Save nach Hinzufügen
 }
 
 // Geplanten Block darstellen
@@ -1007,7 +1138,11 @@ function updateBlockAfterResize(block, newTimeIndex, newDuration) {
     block.timeIndex = newTimeIndex;
     block.duration = newDuration;
 
+    // Block in Registry aktualisieren
+    blockRegistry[block.id] = block;
+
     console.log(`Block ${block.activity.name} resized: ${newDuration}min ab ${timeSlots[newTimeIndex]}`);
+    saveWeek(); // Auto-Save nach Resize
 }
 
 // Maximale Dauer berechnen (bis zum nächsten Block oder Ende des Tages)
@@ -1083,8 +1218,12 @@ function moveScheduledBlock(block, newDay, newTimeIndex) {
     block.day = newDay;
     block.timeIndex = newTimeIndex;
 
+    // Block in Registry aktualisieren
+    blockRegistry[block.id] = block;
+
     // Block an neuer Position rendern
     renderScheduledBlock(block);
+    saveWeek(); // Auto-Save nach Verschieben
 }
 
 // Geplanten Block entfernen
@@ -1093,20 +1232,28 @@ function removeScheduledBlock(blockId, render = true) {
     const blockedSlots = Object.keys(scheduledBlocks).filter(key => scheduledBlocks[key] === blockId);
     blockedSlots.forEach(key => delete scheduledBlocks[key]);
 
+    // Block aus Registry entfernen
+    delete blockRegistry[blockId];
+
     // Element immer aus DOM entfernen
     const element = document.querySelector(`[data-block-id="${blockId}"]`);
     if (element) {
         element.remove();
     }
+
+    saveWeek(); // Auto-Save nach Löschen
 }
 
 // Neuer Wochenplan
 function newWeekPlan() {
     if (confirm('Neuen Wochenplan erstellen? Aktuelle Änderungen gehen verloren!')) {
         scheduledBlocks = {};
+        blockRegistry = {};
         document.querySelectorAll('.scheduled-block').forEach(el => el.remove());
         currentPlanName = 'Neuer Wochenplan';
         updatePlanTitle();
+        saveWeek(); // Leeren Plan speichern
+        navigateToApp(); // Zur App navigieren und Session speichern
     }
 }
 
@@ -1200,8 +1347,10 @@ function loadWeekPlan() {
                 // Plan-Namen aktualisieren
                 currentPlanName = weekPlan.name;
                 updatePlanTitle();
+                saveWeek(); // Plan-Namen speichern (wird nach loadWeekData nochmal aufgerufen)
 
-                alert(`Wochenplan "${weekPlan.name}" geladen!`);
+                // Zur App navigieren da Plan geladen wurde
+                navigateToApp();
             } catch (error) {
                 alert('Fehler beim Laden der Datei: ' + error.message);
             }
@@ -1216,6 +1365,7 @@ function loadWeekPlan() {
 function loadWeekData(data) {
     // Erst alles leeren
     scheduledBlocks = {};
+    blockRegistry = {};
     document.querySelectorAll('.scheduled-block').forEach(el => el.remove());
 
     // Dann geladene Blöcke hinzufügen
@@ -1238,6 +1388,9 @@ function loadWeekData(data) {
             // Aktivität mit aktueller Farbe verwenden
             block.activity = activity;
 
+            // Block in Registry speichern
+            blockRegistry[block.id] = block;
+
             const durationSlots = block.duration / timeSettings.timeStep;
 
             // Zeitslots blockieren
@@ -1251,34 +1404,89 @@ function loadWeekData(data) {
             console.warn(`Aktivität "${activityName}" nicht gefunden, Block übersprungen`);
         }
     });
+
+    // Automatisch speichern nach dem Laden
+    saveWeek();
 }
 
 
 // Legacy-Funktion für Rückwärtskompatibilität
 function loadWeek() {
-    const saved = localStorage.getItem('wochenplan');
-    if (saved) {
-        try {
-            const data = JSON.parse(saved);
+    const savedSlots = localStorage.getItem('wochenplan');
+    const savedRegistry = localStorage.getItem('blockRegistry');
 
-            // Prüfen ob Daten im alten Format sind (ohne activity Property)
-            const firstBlock = Object.values(data)[0];
-            if (firstBlock && !firstBlock.activity) {
-                console.log('Alte Wochenplan-Daten gefunden - werden gelöscht für neues Format');
-                localStorage.removeItem('wochenplan');
+    // Neues Format: blockRegistry vorhanden
+    if (savedRegistry) {
+        try {
+            scheduledBlocks = savedSlots ? JSON.parse(savedSlots) : {};
+            blockRegistry = JSON.parse(savedRegistry);
+
+            // Plan-Namen wiederherstellen
+            const savedPlanName = localStorage.getItem('currentPlanName');
+            if (savedPlanName) {
+                currentPlanName = savedPlanName;
+                updatePlanTitle();
+            }
+
+            console.log('Lade Wochenplan aus Registry:',
+                Object.keys(blockRegistry).length, 'Blöcke gefunden');
+
+            // Alle bestehenden Blöcke aus DOM entfernen
+            document.querySelectorAll('.scheduled-block').forEach(el => el.remove());
+
+            // Blöcke aus Registry rendern
+            Object.values(blockRegistry).forEach(block => {
+                // Aktivität mit aktuellen Daten mergen (für Farb-Updates etc.)
+                const activity = activities.find(a => a.name === block.activity.name);
+                if (activity) {
+                    block.activity = activity;
+                    renderScheduledBlock(block);
+                } else {
+                    console.warn(`Aktivität "${block.activity.name}" nicht gefunden, Block wird übersprungen`);
+                }
+            });
+
+            console.log('Wochenplan erfolgreich geladen');
+            return;
+        } catch (error) {
+            console.warn('Fehler beim Laden aus Registry:', error);
+            localStorage.removeItem('blockRegistry');
+        }
+    }
+
+    // Altes Format: Nur wochenplan vorhanden (als Block-Objekte)
+    if (savedSlots) {
+        try {
+            const data = JSON.parse(savedSlots);
+
+            // Prüfen ob Daten im alten Format sind (Block-Objekte statt Slot-Mapping)
+            const firstValue = Object.values(data)[0];
+            if (firstValue && typeof firstValue === 'object' && firstValue.activity) {
+                console.log('Alte Wochenplan-Daten gefunden - werden migriert');
+                loadWeekData(data); // Migriert automatisch zur Registry
                 return;
             }
 
-            // Neue Datenstruktur laden
-            if (data && typeof data === 'object') {
-                loadWeekData(data);
+            // Sehr altes Format (ohne activity Property) - löschen
+            if (firstValue && !firstValue.activity && typeof firstValue === 'object') {
+                console.log('Sehr alte Wochenplan-Daten gefunden - werden gelöscht');
+                localStorage.removeItem('wochenplan');
             }
         } catch (error) {
             console.warn('Fehler beim Laden alter Wochenplan-Daten:', error);
-            // Alte Daten löschen bei Fehlern
             localStorage.removeItem('wochenplan');
         }
     }
+}
+
+// Wochenplan automatisch im localStorage speichern
+function saveWeek() {
+    localStorage.setItem('wochenplan', JSON.stringify(scheduledBlocks));
+    localStorage.setItem('blockRegistry', JSON.stringify(blockRegistry));
+    localStorage.setItem('currentPlanName', currentPlanName);
+    console.log('Wochenplan automatisch gespeichert:',
+        Object.keys(blockRegistry).length, 'Blöcke,',
+        Object.keys(scheduledBlocks).length, 'Slots belegt');
 }
 
 // Modal-Funktionen
@@ -1388,6 +1596,7 @@ function executeAutoFill() {
 
     autoFillWeekPlan(selectedAge);
     closeAutoFillModal();
+    navigateToApp(); // Plan wurde erstellt, zur App navigieren und Session speichern
 }
 
 // Globale Variable für platzierte Aktivitäten (für bessere Konfliktlösung)
@@ -1400,6 +1609,7 @@ function autoFillWeekPlan(ageGroup) {
 
     // Aktuellen Plan leeren
     scheduledBlocks = {};
+    blockRegistry = {};
     placedActivitiesByDay = {
         monday: [], tuesday: [], wednesday: [], thursday: [], friday: [], saturday: [], sunday: []
     };
@@ -1480,6 +1690,9 @@ function autoFillWeekPlan(ageGroup) {
     // Balance-Validierung durchführen
     console.log('\n=== BALANCE-VALIDIERUNG ===');
     validateWeekBalance(ageGroup);
+
+    // Auto-Save nach Auto-Fill
+    saveWeek();
 }
 
 // Einzelne Aktivität im Wochenplan platzieren
@@ -2098,6 +2311,9 @@ function createScheduledBlock(activity, day, timeIndex, durationMinutes) {
         activity: activity,
         duration: durationMinutes
     };
+
+    // Block in Registry speichern
+    blockRegistry[blockId] = block;
 
     // Zeitslots blockieren (nur wenn keine Kollision)
     for (let i = 0; i < durationSlots; i++) {
