@@ -1,5 +1,6 @@
 # 📅 Wochenplan App
 
+![GitHub release](https://img.shields.io/github/v/release/dodjango/wochenplan?style=flat&logo=github)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
@@ -8,7 +9,13 @@
 
 Eine intelligente HTML/JavaScript-basierte Anwendung zur wöchentlichen Planung von Kinderaktivitäten mit automatischer Terminoptimierung.
 
+> **🌐 Live-Demo:** Die App ist online verfügbar unter [https://dodjango.github.io/wochenplan/wochenplan.html](https://dodjango.github.io/wochenplan/wochenplan.html)
+
+![Wochenplan App Screenshot](screenshot.png)
+
 ## 🚀 Schnellstart
+
+**📦 Download:** [Aktuelle Release v1.0.0 herunterladen](https://github.com/dodjango/wochenplan/releases/latest)
 
 1. 📂 `wochenplan.html` direkt im Browser öffnen (Doppelklick)
 2. 🎯 "📋 Neuen Plan erstellen" oder "📂 Vorhandenen Plan laden" wählen
