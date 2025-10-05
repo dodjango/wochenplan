@@ -2,6 +2,10 @@
 let activities = [];
 let currentEditingActivity = null;
 
+// Tracking für ungespeicherte Änderungen
+let hasUnsavedChanges = false;
+let pendingNavigationToWelcome = false;
+
 // Zeiteinstellungen
 let timeSettings = {
     startTime: "06:00",
@@ -536,9 +540,27 @@ function navigateToApp() {
 
 // Zum Welcome Screen navigieren
 function navigateToWelcome() {
+    // Prüfen ob ungespeicherte Änderungen vorliegen
+    if (hasUnsavedChanges) {
+        const confirmed = confirm(
+            'Sie haben ungespeicherte Änderungen.\n\n' +
+            'Möchten Sie die Änderungen speichern, bevor Sie zum Startbildschirm zurückkehren?\n\n' +
+            'Klicken Sie "OK" zum Speichern oder "Abbrechen" zum Verwerfen.'
+        );
+
+        if (confirmed) {
+            // Plan speichern - Navigation wird nach dem Speichern fortgesetzt
+            pendingNavigationToWelcome = true;
+            openSavePlanModal();
+            return;
+        }
+    }
+
+    // Navigation durchführen
     showWelcomeScreen();
     window.location.hash = 'welcome';
     sessionStorage.removeItem('planActive');
+    hasUnsavedChanges = false; // Änderungen verwerfen
 }
 
 // Prüfen ob ein aktiver Plan vorhanden ist
@@ -910,6 +932,7 @@ function addScheduledBlock(day, timeIndex, activity, duration) {
 
     renderScheduledBlock(block);
     saveWeek(); // Auto-Save nach Hinzufügen
+    hasUnsavedChanges = true;
 }
 
 // Geplanten Block darstellen
@@ -1143,6 +1166,7 @@ function updateBlockAfterResize(block, newTimeIndex, newDuration) {
 
     console.log(`Block ${block.activity.name} resized: ${newDuration}min ab ${timeSlots[newTimeIndex]}`);
     saveWeek(); // Auto-Save nach Resize
+    hasUnsavedChanges = true;
 }
 
 // Maximale Dauer berechnen (bis zum nächsten Block oder Ende des Tages)
@@ -1224,6 +1248,7 @@ function moveScheduledBlock(block, newDay, newTimeIndex) {
     // Block an neuer Position rendern
     renderScheduledBlock(block);
     saveWeek(); // Auto-Save nach Verschieben
+    hasUnsavedChanges = true;
 }
 
 // Geplanten Block entfernen
@@ -1242,6 +1267,7 @@ function removeScheduledBlock(blockId, render = true) {
     }
 
     saveWeek(); // Auto-Save nach Löschen
+    hasUnsavedChanges = true;
 }
 
 // Neuer Wochenplan
@@ -1253,6 +1279,7 @@ function newWeekPlan() {
         currentPlanName = 'Neuer Wochenplan';
         updatePlanTitle();
         saveWeek(); // Leeren Plan speichern
+        hasUnsavedChanges = false; // Neuer Plan hat keine ungespeicherten Änderungen
         navigateToApp(); // Zur App navigieren und Session speichern
     }
 }
@@ -1294,6 +1321,9 @@ function savePlanToStorage(planName) {
     updatePlanTitle();
     saveWeek();
 
+    // Änderungen wurden gespeichert
+    hasUnsavedChanges = false;
+
     console.log(`Plan "${planName}" gespeichert`);
 }
 
@@ -1321,6 +1351,8 @@ function loadSavedPlan(planName) {
 
     closeLoadPlanModal();
     navigateToApp();
+
+    hasUnsavedChanges = false; // Geladener Plan hat keine ungespeicherten Änderungen
 
     console.log(`Plan "${planName}" geladen`);
 }
@@ -1376,6 +1408,8 @@ function openSavePlanModal() {
 
 function closeSavePlanModal() {
     document.getElementById('savePlanModal').style.display = 'none';
+    // Navigation abbrechen wenn Modal geschlossen wird ohne zu speichern
+    pendingNavigationToWelcome = false;
 }
 
 function executeSavePlan() {
@@ -1390,6 +1424,14 @@ function executeSavePlan() {
     closeSavePlanModal();
 
     alert(`Plan "${planName}" wurde gespeichert!`);
+
+    // Wenn Navigation zum Welcome Screen ausstehend ist, jetzt durchführen
+    if (pendingNavigationToWelcome) {
+        pendingNavigationToWelcome = false;
+        showWelcomeScreen();
+        window.location.hash = 'welcome';
+        sessionStorage.removeItem('planActive');
+    }
 }
 
 // Modal-Funktionen: Laden
@@ -1507,6 +1549,8 @@ function importPlan() {
                 updatePlanTitle();
                 saveWeek();
 
+                hasUnsavedChanges = false; // Importierter Plan hat keine ungespeicherten Änderungen
+
                 navigateToApp();
 
                 alert(`Plan "${weekPlan.name}" wurde importiert!`);
@@ -1606,6 +1650,7 @@ function loadWeek() {
             });
 
             console.log('Wochenplan erfolgreich geladen');
+            hasUnsavedChanges = false; // Geladener Plan hat keine ungespeicherten Änderungen
             return;
         } catch (error) {
             console.warn('Fehler beim Laden aus Registry:', error);
@@ -1623,6 +1668,7 @@ function loadWeek() {
             if (firstValue && typeof firstValue === 'object' && firstValue.activity) {
                 console.log('Alte Wochenplan-Daten gefunden - werden migriert');
                 loadWeekData(data); // Migriert automatisch zur Registry
+                hasUnsavedChanges = false; // Geladener Plan hat keine ungespeicherten Änderungen
                 return;
             }
 
@@ -1636,6 +1682,9 @@ function loadWeek() {
             localStorage.removeItem('wochenplan');
         }
     }
+
+    // Am Ende sicherstellen, dass keine ungespeicherten Änderungen markiert sind
+    hasUnsavedChanges = false;
 }
 
 // Wochenplan automatisch im localStorage speichern
@@ -1755,6 +1804,7 @@ function executeAutoFill() {
 
     autoFillWeekPlan(selectedAge);
     closeAutoFillModal();
+    hasUnsavedChanges = true; // Auto-Fill hat Änderungen vorgenommen
     navigateToApp(); // Plan wurde erstellt, zur App navigieren und Session speichern
 }
 
