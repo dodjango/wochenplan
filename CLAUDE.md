@@ -8,11 +8,12 @@ This is a German-language weekly planning application for children's activities 
 
 ## Architecture
 
-### Single-File Application
-- `wochenplan.html` contains the entire application (HTML, CSS, JavaScript)
+### Modular Application Structure
+- `wochenplan.html` - Main HTML structure with Welcome Screen and app layout
+- `wochenplan.css` - Complete styling with responsive design and sticky navigation
+- `wochenplan.js` - All application logic and state management
 - No build process, external dependencies, or web server required
 - Runs completely offline in any modern browser
-- Self-contained with inline styles and scripts
 
 ### Data Storage Strategy
 The application uses Browser LocalStorage for all data persistence:
@@ -61,6 +62,13 @@ placedActivitiesByDay = {
 ```
 
 ## Core Functionality
+
+### Welcome Screen & Navigation
+- **Initial state**: Shows Welcome Screen on first visit or when no active plan exists
+- **Hash-based navigation**: Uses `#welcome` and `#app` for state management
+- **SessionStorage persistence**: F5 reload preserves plan state during browser session
+- **Logo navigation**: Calendar icon button returns to Welcome Screen
+- **Plan detection**: Automatically shows app if active plan exists in LocalStorage
 
 ### Intelligent Auto-Fill System (Simplified Algorithm)
 - **Age-based scheduling**: Different defaults for 6-10, 11-14, 15-18 years
@@ -128,7 +136,9 @@ npx serve .
 ### File Structure
 ```
 /
-├── wochenplan.html     # Complete standalone application
+├── wochenplan.html     # Main HTML structure with modals
+├── wochenplan.css      # Complete styling (responsive, sticky navigation)
+├── wochenplan.js       # Application logic and state management
 ├── README.md          # User documentation (German)
 └── CLAUDE.md          # Developer documentation
 ```
@@ -159,6 +169,15 @@ npx serve .
 ## Key Functions to Understand
 
 #### Core Functions
+
+**Navigation & Welcome Screen:**
+- `initNavigation()`: Initialize hash-based navigation and determine initial screen
+- `navigateToWelcome()`: Show Welcome Screen, hide main app
+- `navigateToApp()`: Hide Welcome Screen, show main app
+- `checkActivePlan()`: Check if active plan exists in LocalStorage
+- `createNewPlanFromWelcome()` / `loadPlanFromWelcome()`: Welcome Screen action handlers
+
+**Auto-Fill & Planning:**
 - `autoFillWeekPlan(ageGroup)`: Intelligent weekly schedule generation (simplified algorithm)
 - `placeActivityInSchedule(activity, ageGroup)`: Filters allowed activities and routes to placement
 - `validateWeekBalance(ageGroup)`: Balance validator showing weekly goal achievement
@@ -170,11 +189,17 @@ npx serve .
 - `createScheduledBlock(activity, day, timeIndex, durationMinutes)`: Creates block with collision check, returns true/false
 - `placeSchoolBlocks()` / `placeHomeworkBlocks()`: Smart activity placement (simplified)
 - `findSchoolEndTime(day)` / `findLatestHomeworkEnd(day)`: Helper functions for sequential placement
+
+**UI & Interaction:**
 - `generateTimeSlots()`: Dynamic time grid based on settings
 - `moveScheduledBlock()`: Drag-and-drop with collision detection
 - `setupResizeEvents()`: Initialize resize handles for blocks
 - `handleResizeMove()` / `handleResizeEnd()`: Resize logic with visual feedback
 - `updateBlockAfterResize()`: Update block data and scheduledBlocks after resize
+
+**Data Management:**
+- `saveWeek()`: Auto-save both scheduledBlocks and blockRegistry to LocalStorage
+- `loadWeek()`: Load plan from LocalStorage with registry migration support
 - `mergeWithAgeDefaults()`: Merge saved activities with defaults, handle migrations
 - `loadActivities()`: Load from LocalStorage, add missing activities, apply migrations
 - `cleanupLegacyData()`: Simplified - only handles old week plan format cleanup
@@ -183,11 +208,16 @@ npx serve .
 
 ## Styling Architecture
 
-- **Inline CSS**: Complete styling within `<style>` tag
+- **External CSS file**: `wochenplan.css` contains all styles for maintainability
 - **No redundant CSS classes**: Activity-specific CSS classes removed, colors applied dynamically from activity objects
 - **CSS Grid**: Dynamic calendar layout with configurable rows
 - **Dynamic CSS injection**: `updateCalendarCSS()` injects styles for variable slot heights
-- **Responsive design**: Adapts to different screen sizes
+- **Sticky positioning**: Header, buttons, day headers, and sidebar stay visible while scrolling
+- **Z-index hierarchy**: Ensures correct layering (header: 20, buttons: 15, day headers: 12, blocks: 5)
+- **Natural scrolling**: Page-level scrolling with sticky elements, no complex overflow containers
+- **Responsive design**: 3 breakpoints (1024px, 768px, 480px) for desktop, tablet, mobile
+- **Custom scrollbars**: Webkit-styled scrollbars for calendar and activity-blocks
+- **Smooth scrolling**: CSS `scroll-behavior: smooth` for better UX
 - **Color system**: Musical activities unified (#9b59b6), School distinctive (#5a6c7d)
 - **Modal system**: Settings and activity management overlays
 - **Tooltips**: Built-in hover descriptions using title attributes
@@ -215,6 +245,35 @@ npx serve .
 ## Code Optimization Notes
 
 ### Recent Optimizations (2025)
+
+#### October 2025 (UI/UX Overhaul - Scrolling & Navigation)
+1. **Welcome Screen Implementation**: Professional landing page with gradient background
+   - App description and feature highlights
+   - Two clear CTAs: Create new plan or load existing plan
+   - Animated card with slide-up animation
+2. **Hash-based Navigation**: URL fragments for state management (#welcome, #app)
+   - F5 reload preserves state using SessionStorage
+   - Logo button for returning to Welcome Screen
+3. **Sticky Navigation System**: All key UI elements stay visible while scrolling
+   - Header (z-index: 20, top: 0)
+   - Control buttons (z-index: 15, top: 60px)
+   - Day headers (z-index: 12, top: 130px)
+   - Sidebar (sticky, top: 20px) with fixed title and button
+   - Scheduled blocks (z-index: 5) correctly layer under headers
+4. **Natural Scrolling Architecture**: Simplified from complex overflow containers
+   - Container uses `min-height` instead of fixed `height`
+   - Page-level scrolling with sticky-positioned elements
+   - Removed multiple `overflow: hidden` layers causing scroll issues
+5. **Block Registry System**: Dual storage for complete F5 persistence
+   - `scheduledBlocks`: Slot mapping for collision detection
+   - `blockRegistry`: Full block objects for data persistence
+   - Auto-save after every modification
+6. **Responsive Design**: Complete mobile/tablet support
+   - 3 breakpoints: 1024px (tablet landscape), 768px (tablet portrait), 480px (mobile)
+   - Touch-optimized button sizes (44px minimum)
+   - Horizontal scrolling activity blocks on mobile
+7. **Custom Scrollbars**: Webkit-styled scrollbars for polish
+8. **Smooth Scrolling**: CSS `scroll-behavior: smooth` enabled
 
 #### Early 2025
 1. **Removed redundant CSS classes**: All activity-specific CSS classes (`.trompete`, `.hausaufgaben`, etc.) removed - colors now applied dynamically

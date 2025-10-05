@@ -11,8 +11,9 @@ Eine intelligente HTML/JavaScript-basierte Anwendung zur wöchentlichen Planung 
 ## 🚀 Schnellstart
 
 1. 📂 `wochenplan.html` direkt im Browser öffnen (Doppelklick)
-2. 🎯 Altersgruppe wählen und "🤖 Plan erstellen" klicken
-3. ✨ Plan nach Bedarf anpassen per Drag & Drop
+2. 🎯 "📋 Neuen Plan erstellen" oder "📂 Vorhandenen Plan laden" wählen
+3. 🎯 Altersgruppe wählen und "🤖 Plan erstellen" klicken
+4. ✨ Plan nach Bedarf anpassen per Drag & Drop
 
 **✅ Keine Installation oder Webserver erforderlich** - funktioniert vollständig offline!
 
@@ -47,13 +48,19 @@ Eine intelligente HTML/JavaScript-basierte Anwendung zur wöchentlichen Planung 
 - 🔄 **Automatische Anpassung:** Kalender passt sich sofort an neue Einstellungen an
 
 ### 🎨 Benutzerfreundliche Oberfläche
+- 👋 **Welcome Screen:** Professioneller Startbildschirm mit Beschreibung und klaren Optionen
+- 🏠 **Logo-Navigation:** Zurück zum Startbildschirm über Logo-Button
+- 📌 **Sticky Navigation:** Header, Buttons und Wochentagnamen bleiben beim Scrollen sichtbar
+- 📜 **Natürliches Scrolling:** Flüssiges Seitenscrolling mit fixierten Navigationselementen
 - 🖱️ **Drag & Drop:** Zeitblöcke einfach verschieben und skalieren
 - 🔍 **Resize-Handles:** Blockdauer durch Ziehen anpassen
 - 🚫 **Kollisionserkennung:** Überlappungen werden verhindert
 - 🎨 **Farbkodierung:** Musikalische Aktivitäten einheitlich lila (#9b59b6)
 - 💡 **Tooltips:** Beschreibende Texte beim Hover über Aktivitäten
-- 📱 **Responsive Design:** Funktioniert auf Desktop und Tablet
+- 📱 **Responsive Design:** Funktioniert perfekt auf Desktop, Tablet und Mobile
 - 🔤 **Alphabetische Sortierung:** Aktivitätenliste übersichtlich sortiert
+- 🎨 **Custom Scrollbars:** Elegant gestylte Scrollbalken in Kalender und Sidebar
+- ✨ **Smooth Scrolling:** Sanfte Scroll-Animationen für bessere UX
 
 ### 💾 Datenmanagement
 - 💿 **LocalStorage:** Alle Änderungen werden automatisch im Browser gespeichert
@@ -110,17 +117,22 @@ Der Auto-Fill erstellt ein **Grundgerüst** mit 5 Kern-Aktivitäten:
 - 📡 **Offline-fähig:** Funktioniert ohne Internetverbindung
 - 🔧 **Modern APIs:** Drag & Drop, LocalStorage, File API, Blob API
 - 📐 **CSS Grid:** Responsive Kalender-Layout mit dynamischen Zeilen
-- 📄 **Single File:** Gesamte App in einer HTML-Datei
+- 📄 **Modular:** HTML, CSS und JavaScript getrennt für bessere Wartbarkeit
 - 🎨 **Optimiert:** Keine redundanten CSS-Klassen, generische Hilfsfunktionen
+- 📌 **Sticky Positioning:** Moderne CSS-Technik für fixierte Navigation
+- 🎯 **Z-Index-Hierarchie:** Korrekte Überlagerung von UI-Elementen beim Scrollen
+- 📱 **Mobile-First:** Responsive mit 3 Breakpoints (1024px, 768px, 480px)
 
 ## 📖 Bedienung
 
 ### 📝 Neuen Plan erstellen
-1. 🆕 **Neuer Plan** klicken
-2. ✍️ Plan-Namen eingeben
-3. 🎯 Altersgruppe wählen und **🤖 Plan erstellen**
-4. 📚 Empfehlungs-Links beachten (Hausaufgaben, Sport, Üben)
-5. ➕ Weitere Aktivitäten manuell per Drag & Drop hinzufügen
+1. 👋 Beim ersten Start erscheint der **Welcome Screen** mit App-Beschreibung
+2. 🆕 **"📋 Neuen Plan erstellen"** klicken (vom Welcome Screen oder über "Neuer Plan" Button)
+3. ✍️ Plan-Namen eingeben
+4. 🎯 Altersgruppe wählen und **🤖 Plan erstellen**
+5. 📚 Empfehlungs-Links beachten (Hausaufgaben, Sport, Üben)
+6. ➕ Weitere Aktivitäten manuell per Drag & Drop hinzufügen
+7. 🏠 Über das Logo-Symbol oben links zurück zum Welcome Screen navigieren
 
 ### ✏️ Plan anpassen
 - 🖱️ **Drag & Drop:** Blöcke mit der Maus verschieben
