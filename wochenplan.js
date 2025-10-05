@@ -1262,43 +1262,211 @@ function updatePlanTitle() {
     document.getElementById('planTitle').textContent = currentPlanName;
 }
 
-// Wochenplan speichern
+// === Plan-Verwaltung (LocalStorage) ===
+
+// Alle gespeicherten Pläne abrufen
+function getSavedPlans() {
+    const saved = localStorage.getItem('savedPlans');
+    return saved ? JSON.parse(saved) : {};
+}
+
+// Plan im LocalStorage speichern
+function savePlanToStorage(planName) {
+    const savedPlans = getSavedPlans();
+
+    // Prüfen ob Plan schon existiert und created-Datum übernehmen
+    const existingPlan = savedPlans[planName];
+    const created = existingPlan ? existingPlan.created : new Date().toISOString();
+
+    const plan = {
+        name: planName,
+        created: created,
+        lastModified: new Date().toISOString(),
+        activities: [...activities],
+        blockRegistry: {...blockRegistry}
+    };
+
+    savedPlans[planName] = plan;
+    localStorage.setItem('savedPlans', JSON.stringify(savedPlans));
+
+    // Aktuellen Plan-Namen aktualisieren
+    currentPlanName = planName;
+    updatePlanTitle();
+    saveWeek();
+
+    console.log(`Plan "${planName}" gespeichert`);
+}
+
+// Gespeicherten Plan laden
+function loadSavedPlan(planName) {
+    const savedPlans = getSavedPlans();
+    const plan = savedPlans[planName];
+
+    if (!plan) {
+        alert(`Plan "${planName}" nicht gefunden!`);
+        return;
+    }
+
+    // Aktivitäten laden
+    activities = plan.activities;
+    saveActivities();
+    createActivityBlocks();
+
+    // Block-Daten laden
+    loadWeekData(plan.blockRegistry);
+
+    // Plan-Namen aktualisieren
+    currentPlanName = planName;
+    updatePlanTitle();
+
+    closeLoadPlanModal();
+    navigateToApp();
+
+    console.log(`Plan "${planName}" geladen`);
+}
+
+// Gespeicherten Plan löschen
+function deleteSavedPlan(planName, event) {
+    event.stopPropagation(); // Verhindere das Laden des Plans
+
+    if (!confirm(`Möchten Sie den Plan "${planName}" wirklich löschen?`)) {
+        return;
+    }
+
+    const savedPlans = getSavedPlans();
+    delete savedPlans[planName];
+    localStorage.setItem('savedPlans', JSON.stringify(savedPlans));
+
+    // Liste neu rendern
+    renderSavedPlansList();
+
+    console.log(`Plan "${planName}" gelöscht`);
+}
+
+// Modal-Funktionen: Speichern
+function openSavePlanModal() {
+    const modal = document.getElementById('savePlanModal');
+    const input = document.getElementById('savePlanName');
+    const warning = document.getElementById('overwriteWarning');
+
+    input.value = currentPlanName;
+    warning.style.display = 'none';
+
+    modal.style.display = 'block';
+    input.focus();
+    input.select();
+
+    // Enter-Taste zum Speichern
+    input.onkeypress = function(e) {
+        if (e.key === 'Enter') {
+            executeSavePlan();
+        }
+    };
+
+    // Warnung anzeigen wenn Plan existiert
+    input.oninput = function() {
+        const savedPlans = getSavedPlans();
+        if (savedPlans[input.value.trim()]) {
+            warning.style.display = 'block';
+        } else {
+            warning.style.display = 'none';
+        }
+    };
+}
+
+function closeSavePlanModal() {
+    document.getElementById('savePlanModal').style.display = 'none';
+}
+
+function executeSavePlan() {
+    const planName = document.getElementById('savePlanName').value.trim();
+
+    if (!planName) {
+        alert('Bitte geben Sie einen Plan-Namen ein!');
+        return;
+    }
+
+    savePlanToStorage(planName);
+    closeSavePlanModal();
+
+    alert(`Plan "${planName}" wurde gespeichert!`);
+}
+
+// Modal-Funktionen: Laden
+function openLoadPlanModal() {
+    const modal = document.getElementById('loadPlanModal');
+    modal.style.display = 'block';
+    renderSavedPlansList();
+}
+
+function closeLoadPlanModal() {
+    document.getElementById('loadPlanModal').style.display = 'none';
+}
+
+function renderSavedPlansList() {
+    const container = document.getElementById('savedPlansList');
+    const savedPlans = getSavedPlans();
+    const planNames = Object.keys(savedPlans).sort();
+
+    if (planNames.length === 0) {
+        container.innerHTML = `
+            <div class="empty-plans-message">
+                <p>Noch keine Pläne gespeichert.</p>
+                <p>Erstellen Sie einen Plan und speichern Sie ihn!</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = planNames.map(name => {
+        const plan = savedPlans[name];
+        const date = new Date(plan.lastModified || plan.created);
+        const dateStr = date.toLocaleDateString('de-DE', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        return `
+            <div class="plan-item" onclick="loadSavedPlan('${name}')">
+                <div class="plan-item-info">
+                    <div class="plan-item-name">${name}</div>
+                    <div class="plan-item-date">Zuletzt geändert: ${dateStr}</div>
+                </div>
+                <div class="plan-item-actions">
+                    <button class="btn btn-secondary" onclick="deleteSavedPlan('${name}', event)">
+                        Löschen
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Alte Funktionen umbenannt für Export/Import
 function saveWeekPlan() {
-    const defaultName = currentPlanName;
-    const planName = prompt('Name für den Wochenplan:', defaultName);
+    openSavePlanModal();
+}
+
+function loadWeekPlan() {
+    openLoadPlanModal();
+}
+
+// === Export/Import (Datei-Download/-Upload) ===
+
+function exportPlan() {
+    const planName = prompt('Name für den Export:', currentPlanName);
     if (!planName) return;
 
-    const schedule = {};
-    document.querySelectorAll('.scheduled-block').forEach(el => {
-        const cell = el.parentElement;
-        const blockId = el.dataset.blockId;
-        const day = cell.dataset.day;
-        const timeIndex = parseInt(cell.dataset.timeIndex);
-
-        // Aktivität aus aktueller Liste finden
-        const activityName = el.textContent.replace('×', '').trim();
-        const activity = activities.find(a => a.name === activityName);
-        const height = parseInt(el.style.height);
-        const duration = Math.round((height + 4) / 30) * 10;
-
-        schedule[blockId] = {
-            id: blockId,
-            day: day,
-            timeIndex: timeIndex,
-            activity: activity,
-            duration: duration
-        };
-    });
-
-    // Neue erweiterte Datenstruktur
     const weekPlan = {
         name: planName,
         created: new Date().toISOString(),
-        activities: [...activities], // Aktuelle Aktivitäten mitspeichern
-        schedule: schedule
+        activities: [...activities],
+        schedule: {...blockRegistry}
     };
 
-    // Plan speichern und als JSON-Datei herunterladen
     const dataStr = JSON.stringify(weekPlan, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -1308,16 +1476,10 @@ function saveWeekPlan() {
     link.click();
     URL.revokeObjectURL(url);
 
-    // Aktuellen Plan-Namen aktualisieren
-    currentPlanName = planName;
-    updatePlanTitle();
-
-    alert(`Wochenplan "${planName}" als JSON-Datei gespeichert!`);
+    alert(`Plan "${planName}" als JSON-Datei exportiert!`);
 }
 
-// Wochenplan laden
-function loadWeekPlan() {
-    // File input für JSON-Dateien erstellen
+function importPlan() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -1330,27 +1492,24 @@ function loadWeekPlan() {
             try {
                 const weekPlan = JSON.parse(event.target.result);
 
-                // Validierung der Datenstruktur
                 if (!weekPlan.name || !weekPlan.activities || !weekPlan.schedule) {
                     alert('Ungültiges Wochenplan-Format!');
                     return;
                 }
 
-                // Aktivitäten laden und speichern
                 activities = weekPlan.activities;
                 saveActivities();
                 createActivityBlocks();
 
-                // Plan-Daten laden
                 loadWeekData(weekPlan.schedule);
 
-                // Plan-Namen aktualisieren
                 currentPlanName = weekPlan.name;
                 updatePlanTitle();
-                saveWeek(); // Plan-Namen speichern (wird nach loadWeekData nochmal aufgerufen)
+                saveWeek();
 
-                // Zur App navigieren da Plan geladen wurde
                 navigateToApp();
+
+                alert(`Plan "${weekPlan.name}" wurde importiert!`);
             } catch (error) {
                 alert('Fehler beim Laden der Datei: ' + error.message);
             }

@@ -64,9 +64,11 @@ Eine intelligente HTML/JavaScript-basierte Anwendung zur wöchentlichen Planung 
 
 ### 💾 Datenmanagement
 - 💿 **LocalStorage:** Alle Änderungen werden automatisch im Browser gespeichert
-- 📥 **Export/Import:** Pläne als JSON-Dateien speichern und laden
-- 📋 **Plan-Verwaltung:** Mehrere benannte Pläne verwalten
+- 📋 **Plan-Verwaltung:** Mehrere benannte Pläne gleichzeitig im Browser speichern und verwalten
+- 💾 **Speichern/Laden:** Intuitive Dialoge für schnellen Zugriff auf gespeicherte Pläne
+- 📥 **Export/Import:** Pläne als JSON-Dateien für Backup und Teilen exportieren/importieren
 - 🔄 **Auto-Migration:** Aktivitäten werden automatisch aktualisiert
+- 📅 **Zeitstempel:** Zeigt Erstellungs- und Änderungsdatum für jeden Plan
 
 ## 🔧 Einstellungen
 
@@ -143,8 +145,16 @@ Der Auto-Fill erstellt ein **Grundgerüst** mit 5 Kern-Aktivitäten:
 - 🗑️ **Aktivität löschen:** Papierkorb-Symbol in der Aktivitätenliste
 
 ### 💾 Plan speichern/laden
-- 💾 **Wochenplan speichern:** JSON-Datei herunterladen
-- 📂 **Wochenplan laden:** JSON-Datei auswählen
+- 💾 **Speichern:** Plan direkt im Browser speichern - Dialog öffnet sich, Namen eingeben, fertig!
+  - Bestehende Pläne können unter demselben Namen überschrieben werden
+  - Warnung erscheint bei bereits existierenden Plan-Namen
+  - Erstellungs- und Änderungsdatum werden automatisch gespeichert
+- 📂 **Laden:** Übersichtliche Liste aller gespeicherten Pläne
+  - Zeigt Plan-Name und letztes Änderungsdatum
+  - Ein Klick zum Laden
+  - Löschen-Button für nicht mehr benötigte Pläne
+- 📤 **Export:** Plan als JSON-Datei herunterladen (für Backup oder Teilen)
+- 📥 **Import:** JSON-Datei von Computer oder anderen Quellen laden
 
 ## 🆘 Problemlösung
 
@@ -163,29 +173,36 @@ Der Auto-Fill erstellt ein **Grundgerüst** mit 5 Kern-Aktivitäten:
 ### ❓ Problem: "Oma" heißt nicht "Oma besuchen"
 **✅ Lösung:** Seite neu laden - Auto-Migration aktualisiert Aktivitätennamen automatisch
 
-## 📄 JSON-Format
+## 📄 JSON-Format (Export/Import)
 
 ```json
 {
-  "title": "Mein Wochenplan",
+  "name": "Mein Wochenplan",
+  "created": "2025-10-06T12:00:00.000Z",
   "activities": [
     {
       "name": "Schule",
-      "color": "#9b59b6",
-      "description": "Der reguläre Schulunterricht..."
+      "color": "#5a6c7d",
+      "description": "Der reguläre Schulunterricht mit allen Fächern"
     }
   ],
   "schedule": {
-    "monday": [
-      {
-        "activity": "Schule",
-        "startTime": "08:00",
-        "duration": 300
-      }
-    ]
+    "block-123": {
+      "id": "block-123",
+      "day": "monday",
+      "timeIndex": 48,
+      "activity": {
+        "name": "Schule",
+        "color": "#5a6c7d",
+        "description": "Der reguläre Schulunterricht mit allen Fächern"
+      },
+      "duration": 300
+    }
   }
 }
 ```
+
+**Hinweis:** Das LocalStorage-Format kann leicht abweichen, da dort zusätzlich `lastModified` und `blockRegistry` gespeichert werden.
 
 ## 🎯 Zielgruppe
 

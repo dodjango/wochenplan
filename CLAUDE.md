@@ -20,9 +20,12 @@ The application uses Browser LocalStorage for all data persistence:
 
 1. **Activities**: Predefined activities with descriptions embedded in JavaScript
 2. **Settings**: Time configuration (start/end time, grid interval) in LocalStorage
-3. **Plans**: Multiple named weekly plans stored and managed in LocalStorage
-4. **Auto-sync**: Automatic addition of new activities when app updates
-5. **Export/Import**: JSON files for backup and sharing plans
+3. **Plans**: Multiple named weekly plans stored and managed in LocalStorage under `savedPlans` key
+   - Each plan stored with name, created date, last modified date, activities, and blockRegistry
+   - Plans accessible via modal dialogs (Save/Load)
+4. **Active Plan**: Current working plan auto-saved to `wochenplan`, `blockRegistry`, `currentPlanName` keys
+5. **Auto-sync**: Automatic addition of new activities when app updates
+6. **Export/Import**: JSON files for backup and sharing plans (separate from LocalStorage save/load)
 
 ### Key Data Structures
 
@@ -44,14 +47,26 @@ timeSettings = {
 // Dynamic time slots based on settings
 timeSlots = ["06:00", "06:10", "06:20", ...]
 
-// Plan structure with unified JSON format
-plan = {
-  title: "Plan Name",
+// Saved plans structure (LocalStorage)
+savedPlans = {
+  "Mein Wochenplan": {
+    name: "Mein Wochenplan",
+    created: "2025-10-06T12:00:00.000Z",
+    lastModified: "2025-10-06T15:30:00.000Z",
+    activities: [...],
+    blockRegistry: {
+      "block-123": { id: "block-123", day: "monday", timeIndex: 48, activity: {...}, duration: 300 }
+    }
+  },
+  "Ferienwoche": { ... }
+}
+
+// Export/Import JSON format (file-based)
+exportedPlan = {
+  name: "Plan Name",
+  created: "2025-10-06T12:00:00.000Z",
   activities: [...],
-  schedule: {
-    monday: [{ activity: "name", startTime: "08:00", duration: 300 }],
-    // ... other days
-  }
+  schedule: { /* blockRegistry */ }
 }
 
 // Auto-fill tracking per day
@@ -114,10 +129,17 @@ placedActivitiesByDay = {
    - Only prompts for confirmation if existing blocks present
 3. **Add manually**: Drag & drop additional activities (AG, Freunde, etc.)
 4. **Customize**: Adjust timing and activities via drag & drop
-5. **Save**: "💾 Wochenplan speichern" exports complete plan as JSON
-6. **Load**: "📂 Wochenplan laden" imports saved plans
-7. **Switch**: Dropdown to switch between multiple stored plans
-8. **Validate**: Check browser console for balance validation report
+5. **Save**: "💾 Speichern" opens modal dialog to save plan in LocalStorage
+   - Enter plan name (default: current plan name)
+   - Overwrite warning if plan exists
+   - Preserves created date, updates lastModified timestamp
+6. **Load**: "📂 Laden" opens modal with list of all saved plans
+   - Shows plan name and last modified date
+   - Click to load, button to delete
+   - Loads activities and blockRegistry
+7. **Export**: "📤 Export" downloads plan as JSON file (backup/sharing)
+8. **Import**: "📥 Import" loads plan from JSON file
+9. **Validate**: Check browser console for balance validation report
 
 ## Development Commands
 
@@ -198,8 +220,17 @@ npx serve .
 - `updateBlockAfterResize()`: Update block data and scheduledBlocks after resize
 
 **Data Management:**
-- `saveWeek()`: Auto-save both scheduledBlocks and blockRegistry to LocalStorage
-- `loadWeek()`: Load plan from LocalStorage with registry migration support
+- `saveWeek()`: Auto-save both scheduledBlocks and blockRegistry to LocalStorage (active plan)
+- `loadWeek()`: Load active plan from LocalStorage with registry migration support
+- `getSavedPlans()`: Retrieve all saved plans from LocalStorage
+- `savePlanToStorage(planName)`: Save current plan to savedPlans collection in LocalStorage
+- `loadSavedPlan(planName)`: Load specific plan from savedPlans collection
+- `deleteSavedPlan(planName, event)`: Delete plan from savedPlans collection
+- `openSavePlanModal()` / `closeSavePlanModal()`: Modal dialog for saving plans
+- `openLoadPlanModal()` / `closeLoadPlanModal()`: Modal dialog for loading plans
+- `renderSavedPlansList()`: Render list of saved plans with timestamps
+- `exportPlan()`: Export current plan as JSON file download
+- `importPlan()`: Import plan from JSON file upload
 - `mergeWithAgeDefaults()`: Merge saved activities with defaults, handle migrations
 - `loadActivities()`: Load from LocalStorage, add missing activities, apply migrations
 - `cleanupLegacyData()`: Simplified - only handles old week plan format cleanup
@@ -219,7 +250,8 @@ npx serve .
 - **Custom scrollbars**: Webkit-styled scrollbars for calendar and activity-blocks
 - **Smooth scrolling**: CSS `scroll-behavior: smooth` for better UX
 - **Color system**: Musical activities unified (#9b59b6), School distinctive (#5a6c7d)
-- **Modal system**: Settings and activity management overlays
+- **Modal system**: Settings, activity management, save/load plan dialogs
+- **Plan list styling**: Hover effects, timestamps, delete buttons for saved plans
 - **Tooltips**: Built-in hover descriptions using title attributes
 - **Overlay controls**: Edit/delete buttons on activity blocks appear on hover with semi-transparent background
 
@@ -241,10 +273,35 @@ npx serve .
 - **Time grid errors**: Ensure `timeSettings` are valid
 - **Drag issues**: Check `scheduledBlocks` state consistency
 - **Resize not working**: Verify `setupResizeEvents()` is called for all blocks
+- **Plan not saving**: Check browser console for localStorage errors, ensure localStorage is enabled
+- **Plan list empty**: Verify `savedPlans` key exists in localStorage, check `getSavedPlans()`
+- **Load plan fails**: Ensure plan format is valid, check `loadSavedPlan()` and `loadWeekData()`
 
 ## Code Optimization Notes
 
 ### Recent Optimizations (2025)
+
+#### October 2025 (Plan Management Overhaul)
+1. **LocalStorage-based Plan Management**: Plans saved directly in browser instead of file downloads
+   - `savedPlans` key stores multiple plans with metadata
+   - Save modal with overwrite warning for existing plans
+   - Load modal with searchable list of all saved plans
+   - Timestamp tracking: created and lastModified dates
+2. **Separate Export/Import Functions**: File operations separated from save/load
+   - `exportPlan()`: Download JSON file for backup/sharing
+   - `importPlan()`: Upload JSON file from computer
+   - Old `saveWeekPlan()`/`loadWeekPlan()` repurposed for LocalStorage operations
+3. **Enhanced User Experience**:
+   - Visual list of saved plans with timestamps
+   - One-click plan loading and deletion
+   - Automatic plan name preservation and update
+   - Enter key support in save modal
+   - Real-time overwrite warning
+4. **New UI Controls**: Updated button labels and added Export/Import buttons
+   - "💾 Speichern" (LocalStorage save)
+   - "📂 Laden" (LocalStorage load)
+   - "📤 Export" (JSON download)
+   - "📥 Import" (JSON upload)
 
 #### October 2025 (UI/UX Overhaul - Scrolling & Navigation)
 1. **Welcome Screen Implementation**: Professional landing page with gradient background

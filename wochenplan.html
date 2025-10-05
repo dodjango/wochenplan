@@ -46,10 +46,12 @@
         </div>
 
         <div class="controls">
-            <button class="btn btn-secondary" onclick="newWeekPlan()">Neuer Plan</button>
-            <button class="btn btn-secondary" onclick="openAutoFillModal()">Auto-Füllen</button>
-            <button class="btn btn-primary" onclick="saveWeekPlan()">Wochenplan speichern</button>
-            <button class="btn btn-secondary" onclick="loadWeekPlan()">Wochenplan laden</button>
+            <button class="btn btn-secondary" onclick="newWeekPlan()">📋 Neuer Plan</button>
+            <button class="btn btn-secondary" onclick="openAutoFillModal()">🤖 Auto-Füllen</button>
+            <button class="btn btn-primary" onclick="saveWeekPlan()">💾 Speichern</button>
+            <button class="btn btn-secondary" onclick="loadWeekPlan()">📂 Laden</button>
+            <button class="btn btn-secondary" onclick="exportPlan()">📤 Export</button>
+            <button class="btn btn-secondary" onclick="importPlan()">📥 Import</button>
             <button class="btn btn-secondary" onclick="openSettingsModal()">⚙️ Einstellungen</button>
         </div>
 
@@ -182,6 +184,39 @@
             <div class="modal-buttons">
                 <button type="button" class="btn btn-secondary" onclick="closeSettingsModal()">Abbrechen</button>
                 <button type="button" class="btn btn-primary" onclick="applySettings()">Anwenden</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Save Plan Modal -->
+    <div id="savePlanModal" class="modal">
+        <div class="modal-content">
+            <h3>Wochenplan speichern</h3>
+            <div class="form-group">
+                <label for="savePlanName">Plan-Name:</label>
+                <input type="text" id="savePlanName" placeholder="z.B. Mein Wochenplan">
+            </div>
+            <div id="overwriteWarning" class="form-group" style="display: none; background-color: #fff3cd; padding: 12px; border-radius: 4px; border-left: 4px solid #ffc107;">
+                <p style="margin: 0; color: #856404;">
+                    ⚠️ Ein Plan mit diesem Namen existiert bereits. Möchten Sie ihn überschreiben?
+                </p>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary" onclick="closeSavePlanModal()">Abbrechen</button>
+                <button type="button" class="btn btn-primary" onclick="executeSavePlan()">Speichern</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Plan Modal -->
+    <div id="loadPlanModal" class="modal">
+        <div class="modal-content">
+            <h3>Gespeicherte Pläne</h3>
+            <div id="savedPlansList" class="saved-plans-list">
+                <!-- Wird durch JavaScript gefüllt -->
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary" onclick="closeLoadPlanModal()">Abbrechen</button>
             </div>
         </div>
     </div>
