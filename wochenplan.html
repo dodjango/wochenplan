@@ -1,68 +1,337 @@
 <!DOCTYPE html>
 <html lang="de">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wochenplan für Kinder</title>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{font-family:Arial,sans-serif;background:#f5f5f5;padding:20px}
-        .container{max-width:1200px;margin:0 auto;background:#fff;border-radius:10px;padding:20px;box-shadow:0 4px 6px rgba(0,0,0,.1)}
-        h1{text-align:center;color:#333;margin-bottom:30px}
-        .app-layout{display:flex;gap:20px}
-        .sidebar{flex:0 0 250px;background:#f8f9fa;border-radius:8px;padding:15px}
-        .sidebar h3{margin-bottom:15px;color:#333}
-        .activity-blocks{display:flex;flex-direction:column;gap:8px}
-        .activity-block{padding:10px;border-radius:5px;color:#fff;font-weight:bold;cursor:grab;text-align:center;user-select:none;box-shadow:0 2px 4px rgba(0,0,0,.2)}
-        .activity-block:active{cursor:grabbing}
-        .calendar{flex:1;background:#fff}
-        .calendar-header{display:grid;grid-template-columns:80px repeat(7,1fr);gap:1px;margin-bottom:1px}
-        .day-header,.time-header{background:#4CAF50;color:#fff;padding:10px;text-align:center;font-weight:bold}
-        .calendar-grid{display:grid;grid-template-columns:80px repeat(7,1fr);gap:1px;background:#ddd}
-        .time-slot{background:#666;color:#fff;padding:5px;text-align:center;font-size:12px;display:flex;align-items:center;justify-content:center}
-        .calendar-cell{background:#fff;min-height:30px;border:1px solid #e0e0e0;position:relative}
-        .calendar-cell.drop-zone{background:#e8f5e8;border:2px dashed #4CAF50}
-        .scheduled-block{position:absolute;left:2px;right:2px;border-radius:3px;color:#fff;font-size:11px;font-weight:bold;text-align:center;cursor:move;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,.3);overflow:hidden;display:flex;align-items:center;justify-content:center}
-        .scheduled-block.resize-top,.scheduled-block.resize-bottom{cursor:ns-resize!important}
-        .scheduled-block.resizing{opacity:.8;box-shadow:0 2px 8px rgba(0,0,0,.5)}
-        .scheduled-block.dragging{opacity:0;border:2px dashed #666}
-        .resize-handle{position:absolute;left:0;right:0;height:8px;z-index:15;cursor:ns-resize}
-        .resize-handle-top{top:0}
-        .resize-handle-bottom{bottom:0}
-        .resize-handle:hover{background:rgba(255,255,255,.3)}
-        .remove-btn{position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(255,255,255,.8);border:none;border-radius:50%;cursor:pointer;font-size:10px;color:#333;display:none}
-        .scheduled-block:hover .remove-btn{display:block}
-        .controls{margin-bottom:20px;text-align:center}
-        .btn{padding:8px 16px;margin:0 5px;border:none;border-radius:5px;cursor:pointer;font-weight:bold}
-        .btn-primary{background:#4CAF50;color:#fff}
-        .btn-secondary{background:#6c757d;color:#fff}
-        .trompete{background:#ff6b6b}
-        .hausaufgaben{background:#4ecdc4}
-        .ueben{background:#45b7d1}
-        .trompetenunterricht{background:#f39c12}
-        .schule{background:#9b59b6}
-        .ag{background:#e74c3c}
-        .hausaufgabenbetreuung{background:#2ecc71}
-        .saxophon{background:#f1c40f}
-        .saxophonunterricht{background:#e67e22}
-        .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.5)}
-        .modal-content{background:#fff;margin:10% auto;padding:20px;border-radius:10px;width:400px;max-width:90%}
-        .modal h3{margin-bottom:20px;color:#333}
-        .form-group{margin-bottom:15px}
-        .form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#333}
-        .form-group input,.form-group textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px;font-family:inherit}
-        .form-group textarea{resize:vertical;min-height:60px}
-        .color-picker{width:50px!important;height:40px;border:none;border-radius:4px;cursor:pointer}
-        .modal-buttons{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
-        .activity-item{display:flex;align-items:center;justify-content:space-between;padding:5px;margin:2px 0;border-radius:3px;background:#f8f9fa}
-        .activity-controls{display:flex;gap:5px}
-        .btn-small{padding:4px 8px;font-size:12px;border:none;border-radius:3px;cursor:pointer}
-        .btn-edit{background:#ffc107;color:#000}
-        .btn-delete{background:#dc3545;color:#fff}
-        .activity-management{margin-bottom:15px;text-align:center}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
 
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, .1)
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px
+        }
+
+        .app-layout {
+            display: flex;
+            gap: 20px
+        }
+
+        .sidebar {
+            flex: 0 0 250px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px
+        }
+
+        .sidebar h3 {
+            margin-bottom: 15px;
+            color: #333
+        }
+
+        .activity-blocks {
+            display: flex;
+            flex-direction: column;
+            gap: 8px
+        }
+
+        .activity-block {
+            padding: 10px;
+            border-radius: 5px;
+            color: #fff;
+            font-weight: bold;
+            cursor: grab;
+            text-align: center;
+            user-select: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, .2)
+        }
+
+        .activity-block:active {
+            cursor: grabbing
+        }
+
+        .calendar {
+            flex: 1;
+            background: #fff
+        }
+
+        .calendar-header {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+            gap: 1px;
+            margin-bottom: 1px
+        }
+
+        .day-header,
+        .time-header {
+            background: #4CAF50;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+            gap: 1px;
+            background: #ddd
+        }
+
+        .time-slot {
+            background: #666;
+            color: #fff;
+            padding: 5px;
+            text-align: center;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .calendar-cell {
+            background: #fff;
+            min-height: 30px;
+            border: 1px solid #e0e0e0;
+            position: relative
+        }
+
+        .calendar-cell.drop-zone {
+            background: #e8f5e8;
+            border: 2px dashed #4CAF50
+        }
+
+        .scheduled-block {
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            border-radius: 3px;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            cursor: move;
+            z-index: 10;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .scheduled-block.resize-top,
+        .scheduled-block.resize-bottom {
+            cursor: ns-resize !important
+        }
+
+        .scheduled-block.resizing {
+            opacity: .8;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .5)
+        }
+
+        .scheduled-block.dragging {
+            opacity: 0;
+            border: 2px dashed #666
+        }
+
+        .resize-handle {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 8px;
+            z-index: 15;
+            cursor: ns-resize
+        }
+
+        .resize-handle-top {
+            top: 0
+        }
+
+        .resize-handle-bottom {
+            bottom: 0
+        }
+
+        .resize-handle:hover {
+            background: rgba(255, 255, 255, .3)
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            background: rgba(255, 255, 255, .8);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 10px;
+            color: #333;
+            display: none
+        }
+
+        .scheduled-block:hover .remove-btn {
+            display: block
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            text-align: center
+        }
+
+        .btn {
+            padding: 8px 16px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold
+        }
+
+        .btn-primary {
+            background: #4CAF50;
+            color: #fff
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: #fff
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, .5)
+        }
+
+        .modal-content {
+            background: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+            max-width: 90%
+        }
+
+        .modal h3 {
+            margin-bottom: 20px;
+            color: #333
+        }
+
+        .form-group {
+            margin-bottom: 15px
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px
+        }
+
+        .color-picker {
+            width: 50px !important;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px
+        }
+
+        .activity-item {
+            position: relative;
+            margin-bottom: 8px
+        }
+
+        .activity-controls {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            display: none;
+            gap: 3px;
+            z-index: 20
+        }
+
+        .activity-item:hover .activity-controls {
+            display: flex
+        }
+
+        .btn-small {
+            width: 20px;
+            height: 20px;
+            padding: 0;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.9)
+        }
+
+        .btn-edit {
+            color: #f39c12
+        }
+
+        .btn-delete {
+            color: #dc3545
+        }
+
+        .activity-management {
+            margin-bottom: 15px;
+            text-align: center
+        }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1 id="planTitle">Neuer Wochenplan</h1>
@@ -120,7 +389,8 @@
                 </div>
                 <div class="form-group">
                     <label for="activityDescription">Beschreibung:</label>
-                    <textarea id="activityDescription" rows="2" placeholder="Beschreibung der Aktivität (optional)"></textarea>
+                    <textarea id="activityDescription" rows="2"
+                        placeholder="Beschreibung der Aktivität (optional)"></textarea>
                 </div>
                 <div class="modal-buttons">
                     <button type="button" class="btn btn-secondary" onclick="closeActivityModal()">Abbrechen</button>
@@ -202,7 +472,7 @@
         const defaultActivities = [
             {
                 name: "Schule",
-                color: "#9b59b6",
+                color: "#5a6c7d",
                 description: "Der reguläre Schulunterricht mit allen Fächern wie Deutsch, Mathe, Sachkunde und mehr",
                 ageDefaults: {
                     "6-10": {
@@ -279,7 +549,7 @@
             },
             {
                 name: "Trompetenunterricht",
-                color: "#f39c12",
+                color: "#9b59b6",
                 description: "Musikstunde mit dem Trompetenlehrer - neue Lieder und Techniken lernen",
                 ageDefaults: {
                     "6-10": {
@@ -307,7 +577,7 @@
             },
             {
                 name: "Trompete",
-                color: "#ff6b6b",
+                color: "#9b59b6",
                 description: "Zuhause Trompete üben - die gelernten Lieder spielen und besser werden",
                 ageDefaults: {
                     "6-10": {
@@ -335,7 +605,7 @@
             },
             {
                 name: "Saxophonunterricht",
-                color: "#e67e22",
+                color: "#9b59b6",
                 description: "Musikstunde mit dem Saxophonlehrer - neue Lieder und Techniken lernen",
                 ageDefaults: {
                     "11-14": {
@@ -356,7 +626,7 @@
             },
             {
                 name: "Saxophon",
-                color: "#f1c40f",
+                color: "#9b59b6",
                 description: "Zuhause Saxophon üben - die gelernten Lieder spielen und besser werden",
                 ageDefaults: {
                     "11-14": {
@@ -432,7 +702,35 @@
                 }
             },
             {
-                name: "Oma",
+                name: "Haustier",
+                color: "#8b4513",
+                description: "Sich um die Haustiere kümmern - füttern, Gassi gehen, spielen und kuscheln",
+                ageDefaults: {
+                    "6-10": {
+                        dailyMinutes: 20,
+                        weeklyMinutes: 140,
+                        preferredDays: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+                        preferredTimes: ["07:00", "17:00"],
+                        priority: 9
+                    },
+                    "11-14": {
+                        dailyMinutes: 30,
+                        weeklyMinutes: 210,
+                        preferredDays: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+                        preferredTimes: ["07:00", "18:00"],
+                        priority: 9
+                    },
+                    "15-18": {
+                        dailyMinutes: 30,
+                        weeklyMinutes: 210,
+                        preferredDays: ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"],
+                        preferredTimes: ["07:00", "19:00"],
+                        priority: 9
+                    }
+                }
+            },
+            {
+                name: "Oma besuchen",
                 color: "#ff69b4",
                 description: "Oma und Opa besuchen - zusammen spielen, Geschichten hören und Kuchen essen",
                 ageDefaults: {
@@ -461,7 +759,7 @@
             },
             {
                 name: "Klavierunterricht",
-                color: "#8e44ad",
+                color: "#9b59b6",
                 description: "Musikstunde mit dem Klavierlehrer - neue Lieder und Fingertechniken lernen",
                 ageDefaults: {
                     "6-10": {
@@ -489,7 +787,7 @@
             },
             {
                 name: "Klavier",
-                color: "#9c88ff",
+                color: "#9b59b6",
                 description: "Zuhause Klavier üben - die gelernten Stücke spielen und Finger trainieren",
                 ageDefaults: {
                     "6-10": {
@@ -672,7 +970,7 @@
         // Bereinigung alter Datenformate
         function cleanupLegacyData() {
             // Prüfen ob bereits bereinigt wurde
-            if (localStorage.getItem('dataCleanupDone') && localStorage.getItem('descriptionsAdded') && localStorage.getItem('newActivitiesAdded')) {
+            if (localStorage.getItem('dataCleanupDone')) {
                 return;
             }
 
@@ -694,43 +992,6 @@
                 }
             }
 
-            // Aktivitäten-Beschreibungen aktualisieren falls noch nicht geschehen
-            if (!localStorage.getItem('descriptionsAdded')) {
-                const saved = localStorage.getItem('activities');
-                if (saved) {
-                    const savedActivities = JSON.parse(saved);
-                    const updatedActivities = mergeWithAgeDefaults(savedActivities);
-                    localStorage.setItem('activities', JSON.stringify(updatedActivities, null, 2));
-                    console.log('Aktivitäten-Beschreibungen hinzugefügt');
-                }
-                localStorage.setItem('descriptionsAdded', 'true');
-            }
-
-            // Neue Aktivitäten hinzufügen falls noch nicht geschehen
-            if (!localStorage.getItem('newActivitiesAdded')) {
-                const saved = localStorage.getItem('activities');
-                if (saved) {
-                    const savedActivities = JSON.parse(saved);
-                    const currentActivityNames = savedActivities.map(a => a.name);
-
-                    // Finde fehlende Aktivitäten aus defaultActivities
-                    const missingActivities = defaultActivities.filter(defaultAct =>
-                        !currentActivityNames.includes(defaultAct.name)
-                    );
-
-                    if (missingActivities.length > 0) {
-                        const updatedActivities = [...savedActivities, ...missingActivities];
-                        localStorage.setItem('activities', JSON.stringify(updatedActivities, null, 2));
-                        console.log(`${missingActivities.length} neue Aktivitäten hinzugefügt:`, missingActivities.map(a => a.name));
-                    }
-                } else {
-                    // Erste Installation: Alle defaultActivities speichern
-                    localStorage.setItem('activities', JSON.stringify(defaultActivities, null, 2));
-                    console.log('Alle Standard-Aktivitäten bei Erstinstallation gespeichert');
-                }
-                localStorage.setItem('newActivitiesAdded', 'true');
-            }
-
             // Bereinigung als erledigt markieren
             localStorage.setItem('dataCleanupDone', 'true');
             console.log('Datenbereinigung abgeschlossen');
@@ -738,16 +999,29 @@
 
         // Aktivitäten laden - vollständig ohne externe Dateien
         function loadActivities() {
-            // LocalStorage laden und mit ageDefaults ergänzen
             const saved = localStorage.getItem('activities');
             if (saved) {
                 const savedActivities = JSON.parse(saved);
-                activities = mergeWithAgeDefaults(savedActivities);
-                console.log('Aktivitäten aus LocalStorage geladen und mit ageDefaults ergänzt');
+
+                // Merge mit defaults (Updates und Migrationen)
+                const mergedActivities = mergeWithAgeDefaults(savedActivities);
+
+                // Fehlende Aktivitäten aus defaultActivities hinzufügen
+                const existingNames = mergedActivities.map(a => a.name);
+                const missingActivities = defaultActivities.filter(def =>
+                    !existingNames.includes(def.name)
+                );
+
+                activities = [...mergedActivities, ...missingActivities];
+
+                if (missingActivities.length > 0) {
+                    console.log(`${missingActivities.length} neue Aktivitäten hinzugefügt:`, missingActivities.map(a => a.name));
+                }
+                console.log('Aktivitäten aus LocalStorage geladen und aktualisiert');
             } else {
-                // Erste Nutzung: Standard-Aktivitäten mit ageDefaults
+                // Erste Nutzung: Standard-Aktivitäten
                 activities = [...defaultActivities];
-                console.log('Standard-Aktivitäten mit ageDefaults geladen');
+                console.log('Standard-Aktivitäten geladen');
             }
 
             saveActivities();
@@ -756,13 +1030,21 @@
         // Bestehende Aktivitäten mit ageDefaults und Beschreibungen aus defaultActivities ergänzen
         function mergeWithAgeDefaults(savedActivities) {
             return savedActivities.map(savedActivity => {
+                // Migration: "Oma" -> "Oma besuchen"
+                let activityName = savedActivity.name;
+                if (activityName === "Oma") {
+                    activityName = "Oma besuchen";
+                }
+
                 // Suche entsprechende Aktivität in defaultActivities für ageDefaults und Beschreibung
-                const defaultActivity = defaultActivities.find(def => def.name === savedActivity.name);
+                const defaultActivity = defaultActivities.find(def => def.name === activityName);
 
                 if (defaultActivity) {
-                    // Merge: Behalte gespeicherte Daten, ergänze um ageDefaults und description falls nicht vorhanden
+                    // Merge: Behalte gespeicherte Daten, ergänze um ageDefaults, description und color aus defaults
                     return {
                         ...savedActivity,
+                        name: defaultActivity.name,  // Name aus defaults übernehmen (für Migrationen)
+                        color: defaultActivity.color,  // Farbe immer aus defaults übernehmen
                         ageDefaults: defaultActivity.ageDefaults,
                         description: savedActivity.description || defaultActivity.description
                     };
@@ -785,7 +1067,15 @@
             const container = document.getElementById('activityBlocks');
             container.innerHTML = '';
 
-            activities.forEach((activity, index) => {
+            // Alphabetisch sortierte Kopie erstellen
+            const sortedActivities = [...activities].sort((a, b) =>
+                a.name.localeCompare(b.name, 'de')
+            );
+
+            sortedActivities.forEach((activity) => {
+                // Original-Index finden für Edit/Delete
+                const originalIndex = activities.findIndex(a => a.name === activity.name);
+
                 // Container für Aktivität mit Controls
                 const activityItem = document.createElement('div');
                 activityItem.className = 'activity-item';
@@ -810,25 +1100,31 @@
                     e.dataTransfer.effectAllowed = 'copy';
                 });
 
-                // Control-Buttons
+                // Control-Buttons als Overlay
                 const controls = document.createElement('div');
                 controls.className = 'activity-controls';
 
                 const editBtn = document.createElement('button');
                 editBtn.className = 'btn-small btn-edit';
                 editBtn.textContent = '✏️';
-                editBtn.onclick = () => editActivity(index);
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    editActivity(originalIndex);
+                };
 
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'btn-small btn-delete';
                 deleteBtn.textContent = '🗑️';
-                deleteBtn.onclick = () => deleteActivity(index);
+                deleteBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    deleteActivity(originalIndex);
+                };
 
                 controls.appendChild(editBtn);
                 controls.appendChild(deleteBtn);
 
+                block.appendChild(controls);
                 activityItem.appendChild(block);
-                activityItem.appendChild(controls);
                 container.appendChild(activityItem);
             });
         }
@@ -1337,12 +1633,12 @@
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json';
-            input.onchange = function(e) {
+            input.onchange = function (e) {
                 const file = e.target.files[0];
                 if (!file) return;
 
                 const reader = new FileReader();
-                reader.onload = function(event) {
+                reader.onload = function (event) {
                     try {
                         const weekPlan = JSON.parse(event.target.result);
 
@@ -1389,8 +1685,14 @@
                     return;
                 }
 
+                // Migration: "Oma" -> "Oma besuchen"
+                let activityName = block.activity.name;
+                if (activityName === "Oma") {
+                    activityName = "Oma besuchen";
+                }
+
                 // Prüfen ob Aktivität noch in der aktuellen Liste existiert
-                const activity = activities.find(a => a.name === block.activity.name);
+                const activity = activities.find(a => a.name === activityName);
                 if (activity) {
                     // Aktivität mit aktueller Farbe verwenden
                     block.activity = activity;
@@ -1405,7 +1707,7 @@
 
                     renderScheduledBlock(block);
                 } else {
-                    console.warn(`Aktivität "${block.activity.name}" nicht gefunden, Block übersprungen`);
+                    console.warn(`Aktivität "${activityName}" nicht gefunden, Block übersprungen`);
                 }
             });
         }
@@ -1487,7 +1789,7 @@
         }
 
         // Form-Handler
-        document.getElementById('activityForm').addEventListener('submit', function(e) {
+        document.getElementById('activityForm').addEventListener('submit', function (e) {
             e.preventDefault();
 
             const name = document.getElementById('activityName').value.trim();
@@ -1916,40 +2218,22 @@
             return endTime;
         }
 
-        function findLatestHomeworkEnd(day) {
-            // Ähnlich wie findSchoolEndTime, aber für Hausaufgaben
-            const homeworkBlocks = Object.entries(scheduledBlocks).filter(([key, blockId]) => {
-                const [blockDay] = key.split('-');
-                if (blockDay !== day) return false;
-
-                // Prüfe ob es sich um Hausaufgaben handelt (vereinfacht)
-                return true; // Hier könnte man spezifischer werden
-            });
-
-            if (homeworkBlocks.length === 0) return null;
-
-            const lastSlot = Math.max(...homeworkBlocks.map(([key]) => {
-                const [, timeIndex] = key.split('-');
-                return parseInt(timeIndex);
-            }));
-
-            const endIndex = lastSlot + Math.ceil(15 / timeSettings.timeStep); // 15 Min Pause
-            return endIndex < timeSlots.length ? timeSlots[endIndex] : null;
+        // Generische Funktion: Prüfen ob eine Aktivität an einem Tag platziert ist
+        function hasActivityOnDay(day, activityName) {
+            return placedActivitiesByDay[day] && placedActivitiesByDay[day].some(activity => activity.name === activityName);
         }
 
-        // Prüfen ob bereits AG an einem Tag platziert ist
+        // Spezifische Helper-Funktionen (verwenden die generische Funktion)
         function hasAGOnDay(day) {
-            return placedActivitiesByDay[day] && placedActivitiesByDay[day].some(activity => activity.name === 'AG');
+            return hasActivityOnDay(day, 'AG');
         }
 
-        // Prüfen ob bereits Hausaufgabenbetreuung an einem Tag platziert ist
         function hasHomeworkSupervisionOnDay(day) {
-            return placedActivitiesByDay[day] && placedActivitiesByDay[day].some(activity => activity.name === 'Hausaufgabenbetreuung');
+            return hasActivityOnDay(day, 'Hausaufgabenbetreuung');
         }
 
-        // Prüfen ob bereits Hausaufgaben an einem Tag platziert sind
         function hasHomeworkOnDay(day) {
-            return placedActivitiesByDay[day] && placedActivitiesByDay[day].some(activity => activity.name === 'Hausaufgaben');
+            return hasActivityOnDay(day, 'Hausaufgaben');
         }
 
         // Besten verfügbaren Zeitslot finden
@@ -2145,7 +2429,7 @@
         }
 
         // Modal schließen bei Klick außerhalb
-        window.onclick = function(event) {
+        window.onclick = function (event) {
             const activityModal = document.getElementById('activityModal');
             const autoFillModal = document.getElementById('autoFillModal');
             const settingsModal = document.getElementById('settingsModal');
@@ -2163,4 +2447,5 @@
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
+
 </html>
