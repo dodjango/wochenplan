@@ -18,11 +18,13 @@ Eine intelligente HTML/JavaScript-basierte Anwendung zur wöchentlichen Planung 
 
 ## 📋 Features
 
-### ✨ Intelligenter Auto-Fill-Algorithmus
+### ✨ Intelligenter Auto-Fill-Algorithmus (Vereinfacht & Optimiert)
 - 👶 **Altersgerechte Planung:** Automatische Wochenpläne für 6-10, 11-14, 15-18 Jahre
-- ⏰ **Realistische Zeitverteilung:** Schule → Hausaufgabenbetreuung/AG → Hausaufgaben → Hobbys
-- 🔒 **Konfliktlösung:** Verhindert Überschneidungen und unmögliche Kombinationen
-- 🎵 **Instrumentauswahl:** Nur ein Instrument pro Kind (Klavier, Trompete oder Saxophon)
+- 📚 **5 Kern-Aktivitäten:** Schule, Hausaufgaben, Üben, Sport, ein zufälliges Musikinstrument
+- 📊 **Offizielle Empfehlungen:** Basierend auf Kultusministerium, WHO und Lerntherapie-Experten
+- 🔒 **Kollisionserkennung:** Verhindert Überschneidungen und Doppelbelegungen
+- 🎵 **Instrumentauswahl:** Zufällige Wahl zwischen Klavier, Trompete oder Saxophon
+- ✅ **Balance-Validator:** Zeigt Erfüllungsgrad der Wochenziele an
 
 ### 🎯 Aktivitäten-Management
 **16 vordefinierte Aktivitäten mit Beschreibungen:**
@@ -67,23 +69,33 @@ Eine intelligente HTML/JavaScript-basierte Anwendung zur wöchentlichen Planung 
 - 🌙 **Tagesende:** Wann der Kalender endet (z.B. 22:00)
 - ⏰ **Zeitraster:** Präzision in 5-30 Minuten Schritten
 
-## 🤖 Auto-Fill Intelligenz
+## 🤖 Auto-Fill Intelligenz (Vereinfachter Algorithmus)
 
-### 📅 Realistische Tagesabläufe
-Der Auto-Fill-Algorithmus erstellt realistische Wochenpläne:
+### 📅 Was wird automatisch platziert?
+Der Auto-Fill erstellt ein **Grundgerüst** mit 5 Kern-Aktivitäten:
 
-**Typischer Schultag:**
-- 🏫 08:00-13:00: Schule
-- 👩‍🏫 13:30-15:00: Hausaufgabenbetreuung ODER 🎨 AG
-- 📚 15:30-16:30: Hausaufgaben (nur ohne Betreuung)
-- 🎼 17:00-18:00: Musikunterricht (falls vorhanden)
-- 🎹 18:30-19:00: Instrument üben
+**Automatisch platziert:**
+- 🏫 **Schule** (Mo-Fr, 08:00): 5-7 Std je nach Alter
+- 📚 **Hausaufgaben** (Mo-Fr, nach Schule): 45/90/120 Min (Kultusministerium-Empfehlung)
+- 📖 **Üben** (Mo-Fr): 10/15/20 Min täglich (Lerntherapie-Empfehlung)
+- ⚽ **Sport** (2-3× pro Woche): 180/180/270 Min (Sportverein-Praxis)
+- 🎼 **Musikinstrument** (1× Unterricht + täglich Üben): Zufällig Klavier, Trompete oder Saxophon
+
+**Manuell hinzufügen:**
+- 🎨 AG, 👩‍🏫 Hausaufgabenbetreuung, 👫 Freunde, 👵 Oma besuchen, 🐶 Haustier, 🎮 Freizeit
 
 ### 🧠 Intelligente Regeln
-- 🚫 **Keine Doppelbelegung:** Hausaufgaben und Hausaufgabenbetreuung schließen sich aus
-- 🎵 **Nur ein Instrument:** System wählt automatisch Klavier, Trompete oder Saxophon
-- ⏸️ **Realistische Pausen:** 15-30 Minuten zwischen Aktivitäten
-- 📏 **Altersgerechte Dauer:** Längere Schulzeiten für ältere Kinder
+- 🔒 **Kollisionsprüfung:** Keine Überlappungen möglich
+- 🎵 **Ein Instrument:** System wählt zufällig zwischen 3 Instrumenten
+- 📊 **Balance-Validator:** Zeigt Erfüllungsgrad der Wochenziele (Konsole)
+- ⏰ **Keine Aktivitäten vor Schule:** Validierung verhindert Platzierung vor 08:00
+- 📏 **Altersgerechte Zeiten:** Basiert auf offiziellen Empfehlungen
+
+### 📊 Offizielle Empfehlungen (im Auto-Fill-Modal verlinkt)
+- **Hausaufgaben** (Kultusministerium): 6-10 Jahre: 30-45 Min, 11-14 Jahre: 60-90 Min, 15-18 Jahre: 90-120 Min
+- **Extra Üben** (Lerntherapie): 6-10 Jahre: 10 Min, 11-14 Jahre: 15 Min, 15-18 Jahre: 20 Min täglich
+- **Sportverein** (Praxis Deutschland): 2× pro Woche (6-14 Jahre), 3× pro Woche (15-18 Jahre) - je 90 Min
+- **Musikinstrument**: 10-20 Min (Grundschule), 20-30 Min (Mittelstufe), 30-45 Min (Oberstufe) täglich
 
 ## 🌐 Browser-Kompatibilität
 
@@ -107,6 +119,8 @@ Der Auto-Fill-Algorithmus erstellt realistische Wochenpläne:
 1. 🆕 **Neuer Plan** klicken
 2. ✍️ Plan-Namen eingeben
 3. 🎯 Altersgruppe wählen und **🤖 Plan erstellen**
+4. 📚 Empfehlungs-Links beachten (Hausaufgaben, Sport, Üben)
+5. ➕ Weitere Aktivitäten manuell per Drag & Drop hinzufügen
 
 ### ✏️ Plan anpassen
 - 🖱️ **Drag & Drop:** Blöcke mit der Maus verschieben

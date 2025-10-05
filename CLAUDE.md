@@ -62,20 +62,25 @@ placedActivitiesByDay = {
 
 ## Core Functionality
 
-### Intelligent Auto-Fill System
+### Intelligent Auto-Fill System (Simplified Algorithm)
 - **Age-based scheduling**: Different defaults for 6-10, 11-14, 15-18 years
-- **Realistic time windows**: School → afternoon activities → homework → hobbies
-- **Conflict resolution**: Prevents AG vs homework supervision overlaps
-- **Single instrument rule**: Automatically selects one instrument per child
-- **Smart placement**: Activities placed in realistic time slots with proper spacing
+- **5 Core Activities Only**: School, Hausaufgaben, Üben, Sport, random Musikinstrument
+- **Official Recommendations**: Based on Kultusministerium, WHO, and Lerntherapie
+- **Collision Detection**: Prevents overlapping blocks with strict validation
+- **Single instrument rule**: Random selection of Piano, Trompete, or Saxophon
+- **Balance Validator**: Shows weekly goal achievement in console
 
-#### Auto-Fill Algorithm Rules
-1. **School placement**: Age-appropriate durations (3-6 hours)
-2. **Afternoon activities**: AGs and homework supervision after school
-3. **Homework logic**: Only if no homework supervision on that day
-4. **Instrument selection**: Random choice of Piano, Trompete, or Saxophon
-5. **Practice time**: 30 minutes after instrument lessons
-6. **Conflict prevention**: `hasHomeworkOnDay()` prevents duplication
+#### Auto-Fill Algorithm Rules (2025 Simplified)
+1. **Allowed Activities Filter**: Only 5 core activities placed automatically
+   - Schule, Hausaufgaben, Üben, Sport
+   - Musikinstrumente: Klavierunterricht/Klavier, Trompetenunterricht/Trompete, Saxophonunterricht/Saxophon
+2. **School placement**: Age-appropriate durations (5-7 hours, Mo-Fr 08:00)
+3. **Homework logic**: Placed after school (45/90/120 min based on age)
+4. **Practice time (Üben)**: 10/15/20 min daily (reduced from 20/30/45 min)
+5. **Sport**: 180/180/270 min weekly (reduced from 300/360/360 min) - 2-3 sessions
+6. **Instrument selection**: Random choice, includes lesson + practice
+7. **Conflict prevention**: `createScheduledBlock()` returns false on collision
+8. **No activities before school**: `isBeforeSchool()` validation in `findBestTimeSlot()`
 
 ### Drag & Drop System
 - **Source**: Activity blocks in sidebar (copy operation)
@@ -96,11 +101,15 @@ placedActivitiesByDay = {
 
 ### Plan Management Workflow
 1. **Create**: "📋 Neuer Plan" with custom name and age selection
-2. **Auto-fill**: "🤖 Plan erstellen" generates intelligent weekly schedule
-3. **Customize**: Drag & drop to adjust timing and activities
-4. **Save**: "💾 Wochenplan speichern" exports complete plan as JSON
-5. **Load**: "📂 Wochenplan laden" imports saved plans
-6. **Switch**: Dropdown to switch between multiple stored plans
+2. **Auto-fill**: "🤖 Plan erstellen" generates basic weekly schedule (5 core activities only)
+   - Shows official recommendations (Hausaufgaben, Üben, Sport) with links
+   - Only prompts for confirmation if existing blocks present
+3. **Add manually**: Drag & drop additional activities (AG, Freunde, etc.)
+4. **Customize**: Adjust timing and activities via drag & drop
+5. **Save**: "💾 Wochenplan speichern" exports complete plan as JSON
+6. **Load**: "📂 Wochenplan laden" imports saved plans
+7. **Switch**: Dropdown to switch between multiple stored plans
+8. **Validate**: Check browser console for balance validation report
 
 ## Development Commands
 
@@ -150,11 +159,17 @@ npx serve .
 ## Key Functions to Understand
 
 #### Core Functions
-- `autoFillWeekPlan(ageGroup)`: Intelligent weekly schedule generation
-- `selectSingleInstrument()`: Ensures only one instrument per child
+- `autoFillWeekPlan(ageGroup)`: Intelligent weekly schedule generation (simplified algorithm)
+- `placeActivityInSchedule(activity, ageGroup)`: Filters allowed activities and routes to placement
+- `validateWeekBalance(ageGroup)`: Balance validator showing weekly goal achievement
+- `selectSingleInstrument()`: Ensures only one instrument per child (random selection)
 - `hasActivityOnDay(day, activityName)`: Generic function to check activity placement
 - `hasHomeworkOnDay(day)` / `hasAGOnDay(day)` / `hasHomeworkSupervisionOnDay(day)`: Specific helper functions using generic check
-- `placeHomeworkBlocks()` / `placeAGBlocks()`: Smart activity placement
+- `isBeforeSchool(day, timeIndex)`: Validates no activities before school start
+- `findBestTimeSlot(day, durationMinutes, preferredTimes, activityName)`: Finds free slot with validation
+- `createScheduledBlock(activity, day, timeIndex, durationMinutes)`: Creates block with collision check, returns true/false
+- `placeSchoolBlocks()` / `placeHomeworkBlocks()`: Smart activity placement (simplified)
+- `findSchoolEndTime(day)` / `findLatestHomeworkEnd(day)`: Helper functions for sequential placement
 - `generateTimeSlots()`: Dynamic time grid based on settings
 - `moveScheduledBlock()`: Drag-and-drop with collision detection
 - `setupResizeEvents()`: Initialize resize handles for blocks
@@ -201,12 +216,29 @@ npx serve .
 
 ### Recent Optimizations (2025)
 
+#### Early 2025
 1. **Removed redundant CSS classes**: All activity-specific CSS classes (`.trompete`, `.hausaufgaben`, etc.) removed - colors now applied dynamically
 2. **Generalized helper functions**: `hasActivityOnDay(day, activityName)` replaces three specific functions
-3. **Removed unused function**: `findLatestHomeworkEnd()` was never used
-4. **Simplified cleanup**: `cleanupLegacyData()` reduced to only handle old week plan format
-5. **Centralized migrations**: Activity updates (names, colors) handled in `mergeWithAgeDefaults()`
-6. **Auto-add missing activities**: `loadActivities()` automatically adds new activities from defaults
+3. **Simplified cleanup**: `cleanupLegacyData()` reduced to only handle old week plan format
+4. **Centralized migrations**: Activity updates (names, colors) handled in `mergeWithAgeDefaults()`
+5. **Auto-add missing activities**: `loadActivities()` automatically adds new activities from defaults
+
+#### October 2025 (Major AutoFill Overhaul)
+1. **Simplified AutoFill Algorithm**: Only 5 core activities (Schule, Hausaufgaben, Üben, Sport, Musikinstrument)
+   - `allowedActivities` filter in `placeActivityInSchedule()`
+   - Manual placement required for AG, Hausaufgabenbetreuung, Freunde, Oma, Haustier, Freizeit
+2. **Official Recommendations Integration**: Values based on research
+   - Hausaufgaben: 45/90/120 Min (Kultusministerium)
+   - Üben: 10/15/20 Min täglich (Lerntherapie) - reduced from 20/30/45 Min
+   - Sport: 180/180/270 Min weekly (Sportverein-Praxis) - reduced from 300/360/360 Min
+3. **Balance Validator**: `validateWeekBalance()` shows achievement vs. targets in console
+4. **Collision Prevention**: `createScheduledBlock()` now returns true/false, prevents all overlaps
+5. **Before-School Validation**: `isBeforeSchool()` prevents placement before 08:00
+6. **Improved Popup Logic**: `executeAutoFill()` only shows confirmation when blocks exist
+7. **Restored Function**: `findLatestHomeworkEnd()` implemented for instrument practice placement
+8. **Enhanced Tracking**: `placedActivitiesByDay` now stores full block info (activity, timeIndex, duration, id)
+9. **Random Instrument Selection**: Truly random instead of first available
+10. **Auto-Fill Modal**: Added recommendation links to official sources (Kultusministerium, BZgA, Lerntherapie)
 
 ### Activity List
 
