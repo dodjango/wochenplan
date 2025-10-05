@@ -4,10 +4,37 @@
     box-sizing: border-box
 }
 
+html {
+    scroll-behavior: smooth
+}
+
 body {
     font-family: Arial, sans-serif;
     background: #f5f5f5;
     padding: 20px
+}
+
+/* Custom Scrollbar Styling */
+.calendar::-webkit-scrollbar,
+.activity-blocks::-webkit-scrollbar {
+    width: 8px
+}
+
+.calendar::-webkit-scrollbar-track,
+.activity-blocks::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px
+}
+
+.calendar::-webkit-scrollbar-thumb,
+.activity-blocks::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px
+}
+
+.calendar::-webkit-scrollbar-thumb:hover,
+.activity-blocks::-webkit-scrollbar-thumb:hover {
+    background: #555
 }
 
 .container {
@@ -17,7 +44,7 @@ body {
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, .1);
-    height: calc(100vh - 40px);
+    min-height: calc(100vh - 40px);
     display: flex;
     flex-direction: column
 }
@@ -32,8 +59,7 @@ h1 {
     display: flex;
     gap: 20px;
     flex: 1;
-    min-height: 0;
-    overflow: hidden
+    align-items: flex-start
 }
 
 .sidebar {
@@ -43,13 +69,21 @@ h1 {
     padding: 15px;
     display: flex;
     flex-direction: column;
-    min-height: 0
+    position: sticky;
+    top: 20px;
+    max-height: calc(100vh - 40px);
+    align-self: flex-start
 }
 
 .sidebar h3 {
     margin-bottom: 15px;
     color: #333;
-    flex-shrink: 0
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: #fafafa;
+    z-index: 5;
+    padding: 5px 0
 }
 
 .activity-blocks {
@@ -78,10 +112,7 @@ h1 {
 
 .calendar {
     flex: 1;
-    background: #fff;
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-height: 0
+    background: #fff
 }
 
 .calendar-header {
@@ -90,8 +121,8 @@ h1 {
     gap: 1px;
     margin-bottom: 1px;
     position: sticky;
-    top: 0;
-    z-index: 10;
+    top: 130px;
+    z-index: 12;
     background: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
 }
@@ -146,7 +177,7 @@ h1 {
     font-weight: bold;
     text-align: center;
     cursor: move;
-    z-index: 10;
+    z-index: 5;
     box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
     overflow: hidden;
     display: flex;
@@ -212,7 +243,12 @@ h1 {
 .controls {
     margin-bottom: 20px;
     text-align: center;
-    flex-shrink: 0
+    flex-shrink: 0;
+    position: sticky;
+    top: 60px;
+    background: #fff;
+    z-index: 15;
+    padding: 10px 0
 }
 
 .btn {
@@ -343,12 +379,24 @@ h1 {
 .activity-management {
     margin-bottom: 15px;
     text-align: center;
-    flex-shrink: 0
+    flex-shrink: 0;
+    position: sticky;
+    top: 40px;
+    background: #fafafa;
+    z-index: 5;
+    padding: 5px 0
 }
 
 /* App Header & Logo Styles */
 .app-header {
-    margin-bottom: 30px
+    margin-bottom: 30px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 20;
+    padding: 10px 0;
+    margin: -10px 0 20px 0
 }
 
 .logo-title-wrapper {
@@ -482,7 +530,126 @@ h1 {
 }
 
 /* Responsive Design */
+
+/* Tablet Landscape (1024px - 768px) */
+@media (max-width: 1024px) {
+    .container {
+        max-width: 100%;
+        padding: 15px;
+        border-radius: 8px
+    }
+
+    .sidebar {
+        flex: 0 0 180px;
+        padding: 12px
+    }
+
+    .sidebar h3 {
+        font-size: 1em
+    }
+
+    .calendar-grid,
+    .calendar-header {
+        grid-template-columns: 60px repeat(7, 1fr)
+    }
+
+    h1 {
+        font-size: 1.5em;
+        margin-bottom: 20px
+    }
+
+    .btn {
+        padding: 10px 14px;
+        font-size: 0.9em;
+        min-height: 44px
+    }
+
+    .activity-block {
+        min-height: 50px;
+        padding: 12px 10px
+    }
+
+    .calendar-cell {
+        min-height: 40px
+    }
+}
+
+/* Tablet Portrait & Mobile Landscape (768px - 480px) */
 @media (max-width: 768px) {
+    body {
+        padding: 10px
+    }
+
+    .container {
+        padding: 10px;
+        min-height: 500px
+    }
+
+    .app-layout {
+        flex-direction: column;
+        gap: 15px
+    }
+
+    .sidebar {
+        flex: 0 0 auto;
+        width: 100%;
+        max-height: 180px;
+        padding: 10px
+    }
+
+    .sidebar h3 {
+        font-size: 0.9em;
+        margin-bottom: 10px
+    }
+
+    .activity-blocks {
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 5px;
+        gap: 10px
+    }
+
+    .activity-block {
+        min-width: 120px;
+        flex-shrink: 0
+    }
+
+    .calendar {
+        width: 100%;
+        overflow-x: auto
+    }
+
+    .calendar-grid,
+    .calendar-header {
+        grid-template-columns: 50px repeat(7, minmax(80px, 1fr));
+        min-width: 650px
+    }
+
+    h1 {
+        font-size: 1.3em;
+        margin-bottom: 15px
+    }
+
+    .logo-icon {
+        width: 24px;
+        height: 24px
+    }
+
+    .controls {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-bottom: 15px
+    }
+
+    .btn {
+        margin: 0;
+        width: 100%;
+        font-size: 0.85em
+    }
+
+    /* Welcome Screen Anpassungen */
     .welcome-card {
         padding: 40px 30px
     }
@@ -501,7 +668,63 @@ h1 {
     }
 }
 
+/* Mobile Portrait (< 480px) */
 @media (max-width: 480px) {
+    .container {
+        padding: 8px;
+        min-height: 400px
+    }
+
+    h1 {
+        font-size: 1.1em;
+        margin-bottom: 10px
+    }
+
+    .logo-icon {
+        width: 20px;
+        height: 20px
+    }
+
+    .sidebar {
+        max-height: 150px
+    }
+
+    .activity-block {
+        min-width: 100px;
+        font-size: 0.85em
+    }
+
+    .calendar-grid,
+    .calendar-header {
+        grid-template-columns: 45px repeat(7, minmax(70px, 1fr))
+    }
+
+    .time-slot {
+        font-size: 10px;
+        padding: 3px
+    }
+
+    .day-header,
+    .time-header {
+        padding: 8px 4px;
+        font-size: 0.85em
+    }
+
+    .controls {
+        grid-template-columns: 1fr;
+        gap: 6px
+    }
+
+    .btn {
+        font-size: 0.8em;
+        padding: 12px 8px
+    }
+
+    .scheduled-block {
+        font-size: 9px
+    }
+
+    /* Welcome Screen Anpassungen */
     .welcome-card {
         padding: 30px 20px
     }
