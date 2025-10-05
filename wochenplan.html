@@ -5,304 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wochenplan für Kinder</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-        }
-
-        .app-layout {
-            display: flex;
-            gap: 20px;
-        }
-
-        .sidebar {
-            flex: 0 0 250px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-        }
-
-        .sidebar h3 {
-            margin-bottom: 15px;
-            color: #333;
-        }
-
-        .activity-blocks {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .activity-block {
-            padding: 10px;
-            border-radius: 5px;
-            color: white;
-            font-weight: bold;
-            cursor: grab;
-            text-align: center;
-            user-select: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .activity-block:active {
-            cursor: grabbing;
-        }
-
-        .calendar {
-            flex: 1;
-            background: white;
-        }
-
-        .calendar-header {
-            display: grid;
-            grid-template-columns: 80px repeat(7, 1fr);
-            gap: 1px;
-            margin-bottom: 1px;
-        }
-
-        .day-header {
-            background: #4CAF50;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .time-header {
-            background: #4CAF50;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: 80px repeat(7, 1fr);
-            gap: 1px;
-            background: #ddd;
-        }
-
-        .time-slot {
-            background: #666;
-            color: white;
-            padding: 5px;
-            text-align: center;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .calendar-cell {
-            background: white;
-            min-height: 30px;
-            border: 1px solid #e0e0e0;
-            position: relative;
-        }
-
-        .calendar-cell.drop-zone {
-            background: #e8f5e8;
-            border: 2px dashed #4CAF50;
-        }
-
-        .scheduled-block {
-            position: absolute;
-            left: 2px;
-            right: 2px;
-            border-radius: 3px;
-            color: white;
-            font-size: 11px;
-            font-weight: bold;
-            text-align: center;
-            cursor: move;
-            z-index: 10;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .remove-btn {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            width: 16px;
-            height: 16px;
-            background: rgba(255,255,255,0.8);
-            border: none;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 10px;
-            color: #333;
-            display: none;
-        }
-
-        .scheduled-block:hover .remove-btn {
-            display: block;
-        }
-
-        .controls {
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            margin: 0 5px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .btn-primary {
-            background: #4CAF50;
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        /* Aktivitäten-Farben */
-        .trompete { background: #ff6b6b; }
-        .hausaufgaben { background: #4ecdc4; }
-        .ueben { background: #45b7d1; }
-        .trompetenunterricht { background: #f39c12; }
-        .schule { background: #9b59b6; }
-        .ag { background: #e74c3c; }
-        .hausaufgabenbetreuung { background: #2ecc71; }
-        .saxophon { background: #f1c40f; }
-        .saxophonunterricht { background: #e67e22; }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 10% auto;
-            padding: 20px;
-            border-radius: 10px;
-            width: 400px;
-            max-width: 90%;
-        }
-
-        .modal h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .form-group input, .form-group textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-            font-family: inherit;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 60px;
-        }
-
-        .color-picker {
-            width: 50px !important;
-            height: 40px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 5px;
-            margin: 2px 0;
-            border-radius: 3px;
-            background: #f8f9fa;
-        }
-
-        .activity-controls {
-            display: flex;
-            gap: 5px;
-        }
-
-        .btn-small {
-            padding: 4px 8px;
-            font-size: 12px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-
-        .btn-edit {
-            background: #ffc107;
-            color: #000;
-        }
-
-        .btn-delete {
-            background: #dc3545;
-            color: white;
-        }
-
-        .activity-management {
-            margin-bottom: 15px;
-            text-align: center;
-        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:Arial,sans-serif;background:#f5f5f5;padding:20px}
+        .container{max-width:1200px;margin:0 auto;background:#fff;border-radius:10px;padding:20px;box-shadow:0 4px 6px rgba(0,0,0,.1)}
+        h1{text-align:center;color:#333;margin-bottom:30px}
+        .app-layout{display:flex;gap:20px}
+        .sidebar{flex:0 0 250px;background:#f8f9fa;border-radius:8px;padding:15px}
+        .sidebar h3{margin-bottom:15px;color:#333}
+        .activity-blocks{display:flex;flex-direction:column;gap:8px}
+        .activity-block{padding:10px;border-radius:5px;color:#fff;font-weight:bold;cursor:grab;text-align:center;user-select:none;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+        .activity-block:active{cursor:grabbing}
+        .calendar{flex:1;background:#fff}
+        .calendar-header{display:grid;grid-template-columns:80px repeat(7,1fr);gap:1px;margin-bottom:1px}
+        .day-header,.time-header{background:#4CAF50;color:#fff;padding:10px;text-align:center;font-weight:bold}
+        .calendar-grid{display:grid;grid-template-columns:80px repeat(7,1fr);gap:1px;background:#ddd}
+        .time-slot{background:#666;color:#fff;padding:5px;text-align:center;font-size:12px;display:flex;align-items:center;justify-content:center}
+        .calendar-cell{background:#fff;min-height:30px;border:1px solid #e0e0e0;position:relative}
+        .calendar-cell.drop-zone{background:#e8f5e8;border:2px dashed #4CAF50}
+        .scheduled-block{position:absolute;left:2px;right:2px;border-radius:3px;color:#fff;font-size:11px;font-weight:bold;text-align:center;cursor:move;z-index:10;box-shadow:0 1px 3px rgba(0,0,0,.3);overflow:hidden;display:flex;align-items:center;justify-content:center}
+        .scheduled-block.resize-top,.scheduled-block.resize-bottom{cursor:ns-resize!important}
+        .scheduled-block.resizing{opacity:.8;box-shadow:0 2px 8px rgba(0,0,0,.5)}
+        .scheduled-block.dragging{opacity:0;border:2px dashed #666}
+        .resize-handle{position:absolute;left:0;right:0;height:8px;z-index:15;cursor:ns-resize}
+        .resize-handle-top{top:0}
+        .resize-handle-bottom{bottom:0}
+        .resize-handle:hover{background:rgba(255,255,255,.3)}
+        .remove-btn{position:absolute;top:2px;right:2px;width:16px;height:16px;background:rgba(255,255,255,.8);border:none;border-radius:50%;cursor:pointer;font-size:10px;color:#333;display:none}
+        .scheduled-block:hover .remove-btn{display:block}
+        .controls{margin-bottom:20px;text-align:center}
+        .btn{padding:8px 16px;margin:0 5px;border:none;border-radius:5px;cursor:pointer;font-weight:bold}
+        .btn-primary{background:#4CAF50;color:#fff}
+        .btn-secondary{background:#6c757d;color:#fff}
+        .trompete{background:#ff6b6b}
+        .hausaufgaben{background:#4ecdc4}
+        .ueben{background:#45b7d1}
+        .trompetenunterricht{background:#f39c12}
+        .schule{background:#9b59b6}
+        .ag{background:#e74c3c}
+        .hausaufgabenbetreuung{background:#2ecc71}
+        .saxophon{background:#f1c40f}
+        .saxophonunterricht{background:#e67e22}
+        .modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.5)}
+        .modal-content{background:#fff;margin:10% auto;padding:20px;border-radius:10px;width:400px;max-width:90%}
+        .modal h3{margin-bottom:20px;color:#333}
+        .form-group{margin-bottom:15px}
+        .form-group label{display:block;margin-bottom:5px;font-weight:bold;color:#333}
+        .form-group input,.form-group textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px;font-family:inherit}
+        .form-group textarea{resize:vertical;min-height:60px}
+        .color-picker{width:50px!important;height:40px;border:none;border-radius:4px;cursor:pointer}
+        .modal-buttons{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+        .activity-item{display:flex;align-items:center;justify-content:space-between;padding:5px;margin:2px 0;border-radius:3px;background:#f8f9fa}
+        .activity-controls{display:flex;gap:5px}
+        .btn-small{padding:4px 8px;font-size:12px;border:none;border-radius:3px;cursor:pointer}
+        .btn-edit{background:#ffc107;color:#000}
+        .btn-delete{background:#dc3545;color:#fff}
+        .activity-management{margin-bottom:15px;text-align:center}
 
     </style>
 </head>
@@ -854,6 +611,14 @@
         let currentDraggedBlock = null;
         let currentPlanName = 'Neuer Wochenplan';
 
+        // Resize-Variablen
+        let isResizing = false;
+        let resizeDirection = null; // 'top' oder 'bottom'
+        let resizeBlock = null;
+        let resizeStartY = 0;
+        let resizeStartHeight = 0;
+        let resizeStartTimeIndex = 0;
+
         // Initialisierung
         function init() {
             // Einmalige Bereinigung alter Datenformate
@@ -1123,11 +888,9 @@
                         cell.classList.remove('drop-zone');
 
                         if (draggedActivity) {
-                            // Neue Aktivität hinzufügen
-                            const duration = parseInt(prompt('Dauer in Minuten (10, 20, 30, ...):') || '60');
-                            if (duration && duration >= 10 && duration % 10 === 0) {
-                                addScheduledBlock(day, timeIndex, draggedActivity, duration);
-                            }
+                            // Neue Aktivität mit minimaler Rasterlänge hinzufügen
+                            const duration = timeSettings.timeStep;
+                            addScheduledBlock(day, timeIndex, draggedActivity, duration);
                         } else if (currentDraggedBlock) {
                             // Bestehende Aktivität verschieben
                             moveScheduledBlock(currentDraggedBlock, day, timeIndex);
@@ -1210,23 +973,223 @@
             };
             element.appendChild(removeBtn);
 
+            // Resize-Handles hinzufügen
+            const resizeHandleTop = document.createElement('div');
+            resizeHandleTop.className = 'resize-handle resize-handle-top';
+            element.appendChild(resizeHandleTop);
+
+            const resizeHandleBottom = document.createElement('div');
+            resizeHandleBottom.className = 'resize-handle resize-handle-bottom';
+            element.appendChild(resizeHandleBottom);
+
+            // Resize Events
+            setupResizeEvents(element, block, resizeHandleTop, 'top');
+            setupResizeEvents(element, block, resizeHandleBottom, 'bottom');
+
             // Drag Events für Verschieben
             element.addEventListener('dragstart', (e) => {
+                if (isResizing) {
+                    e.preventDefault();
+                    return;
+                }
                 currentDraggedBlock = block;
                 draggedActivity = null;
                 e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', ''); // Für Firefox
+
+                // Canvas für vollständiges Drag-Image erstellen
+                const canvas = document.createElement('canvas');
+                const rect = element.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                const ctx = canvas.getContext('2d');
+
+                // Block-Hintergrund zeichnen
+                ctx.fillStyle = activity.color;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Text zeichnen
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 11px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(activity.name, canvas.width / 2, canvas.height / 2);
+
+                // Canvas als Drag-Image setzen
+                e.dataTransfer.setDragImage(canvas, canvas.width / 2, canvas.height / 2);
+
+                // Original-Block wird unsichtbar, nur Rahmen bleibt
+                setTimeout(() => element.classList.add('dragging'), 0);
             });
 
             element.addEventListener('dragend', (e) => {
+                element.classList.remove('dragging');
                 currentDraggedBlock = null;
-                // Alle Drop-Zonen zurücksetzen
                 document.querySelectorAll('.drop-zone').forEach(cell => {
                     cell.classList.remove('drop-zone');
                 });
             });
 
             cell.appendChild(element);
+        }
+
+        // Resize Events einrichten
+        function setupResizeEvents(element, block, handle, direction) {
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Resize-Modus starten
+                isResizing = true;
+                resizeDirection = direction;
+                resizeBlock = block;
+                resizeStartY = e.clientY;
+                resizeStartHeight = parseInt(element.style.height);
+                resizeStartTimeIndex = block.timeIndex;
+
+                element.classList.add('resizing');
+                element.draggable = false;
+
+                // Globale Event-Listener
+                document.addEventListener('mousemove', handleResizeMove);
+                document.addEventListener('mouseup', handleResizeEnd);
+            });
+        }
+
+        // Resize während Mausbewegung
+        function handleResizeMove(e) {
+            if (!isResizing || !resizeBlock) return;
+
+            const element = document.querySelector(`[data-block-id="${resizeBlock.id}"]`);
+            if (!element) return;
+
+            const slotHeight = calculateSlotHeight();
+            const deltaY = e.clientY - resizeStartY;
+            const deltaSlots = Math.round(deltaY / slotHeight);
+
+            let newDuration = resizeBlock.duration;
+            let newTimeIndex = resizeBlock.timeIndex;
+
+            if (resizeDirection === 'bottom') {
+                // Unten vergrößern/verkleinern
+                newDuration = resizeBlock.duration + (deltaSlots * timeSettings.timeStep);
+            } else if (resizeDirection === 'top') {
+                // Oben vergrößern/verkleinern
+                const durationChange = -deltaSlots * timeSettings.timeStep;
+                newDuration = resizeBlock.duration + durationChange;
+                newTimeIndex = resizeBlock.timeIndex + deltaSlots;
+            }
+
+            // Minimum: Ein Zeitslot
+            if (newDuration < timeSettings.timeStep) {
+                newDuration = timeSettings.timeStep;
+                if (resizeDirection === 'top') {
+                    newTimeIndex = resizeStartTimeIndex + Math.floor((resizeBlock.duration - timeSettings.timeStep) / timeSettings.timeStep);
+                }
+            }
+
+            // Maximum: Bis zum Ende des Tages oder nächsten Block
+            const maxDuration = getMaxDuration(resizeBlock.day, newTimeIndex, resizeBlock.id);
+            if (newDuration > maxDuration) {
+                newDuration = maxDuration;
+            }
+
+            // Prüfen ob neuer Zeitindex gültig ist
+            if (newTimeIndex < 0 || newTimeIndex >= timeSlots.length) {
+                return;
+            }
+
+            // Visuelle Vorschau aktualisieren
+            const durationSlots = newDuration / timeSettings.timeStep;
+            const newHeight = durationSlots * slotHeight - 4;
+            element.style.height = `${newHeight}px`;
+
+            // Position aktualisieren wenn oben resized wird
+            if (resizeDirection === 'top') {
+                const cell = document.querySelector(`[data-day="${resizeBlock.day}"][data-time-index="${newTimeIndex}"]`);
+                if (cell) {
+                    // Element verschieben
+                    const oldParent = element.parentElement;
+                    if (oldParent !== cell) {
+                        cell.appendChild(element);
+                    }
+                }
+            }
+        }
+
+        // Resize beenden
+        function handleResizeEnd(e) {
+            if (!isResizing || !resizeBlock) return;
+
+            const element = document.querySelector(`[data-block-id="${resizeBlock.id}"]`);
+            if (element) {
+                element.classList.remove('resizing');
+                element.draggable = true;
+            }
+
+            // Finale Werte berechnen
+            const slotHeight = calculateSlotHeight();
+            const currentHeight = parseInt(element.style.height);
+            const newDurationSlots = Math.round((currentHeight + 4) / slotHeight);
+            const newDuration = newDurationSlots * timeSettings.timeStep;
+
+            let newTimeIndex = resizeBlock.timeIndex;
+            if (resizeDirection === 'top') {
+                const cell = element.parentElement;
+                newTimeIndex = parseInt(cell.dataset.timeIndex);
+            }
+
+            // Daten aktualisieren
+            updateBlockAfterResize(resizeBlock, newTimeIndex, newDuration);
+
+            // Cleanup
+            document.removeEventListener('mousemove', handleResizeMove);
+            document.removeEventListener('mouseup', handleResizeEnd);
+
+            isResizing = false;
+            resizeDirection = null;
+            resizeBlock = null;
+        }
+
+        // Block-Daten nach Resize aktualisieren
+        function updateBlockAfterResize(block, newTimeIndex, newDuration) {
+            // Alte Slots freigeben
+            const oldDurationSlots = block.duration / timeSettings.timeStep;
+            for (let i = 0; i < oldDurationSlots; i++) {
+                const key = `${block.day}-${block.timeIndex + i}`;
+                delete scheduledBlocks[key];
+            }
+
+            // Neue Slots belegen
+            const newDurationSlots = newDuration / timeSettings.timeStep;
+            for (let i = 0; i < newDurationSlots; i++) {
+                const key = `${block.day}-${newTimeIndex + i}`;
+                scheduledBlocks[key] = block.id;
+            }
+
+            // Block-Objekt aktualisieren
+            block.timeIndex = newTimeIndex;
+            block.duration = newDuration;
+
+            console.log(`Block ${block.activity.name} resized: ${newDuration}min ab ${timeSlots[newTimeIndex]}`);
+        }
+
+        // Maximale Dauer berechnen (bis zum nächsten Block oder Ende des Tages)
+        function getMaxDuration(day, startTimeIndex, currentBlockId) {
+            let maxSlots = timeSlots.length - startTimeIndex;
+
+            // Prüfen bis zum nächsten Block
+            for (let i = 1; i < maxSlots; i++) {
+                const checkKey = `${day}-${startTimeIndex + i}`;
+                const blockingId = scheduledBlocks[checkKey];
+
+                // Wenn ein anderer Block (nicht der aktuelle) gefunden wurde
+                if (blockingId && blockingId !== currentBlockId) {
+                    maxSlots = i;
+                    break;
+                }
+            }
+
+            return maxSlots * timeSettings.timeStep;
         }
 
         // Block verschieben
