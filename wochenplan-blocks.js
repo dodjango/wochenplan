@@ -288,8 +288,8 @@ function updateBlockAfterResize(block, newTimeIndex, newDuration) {
 function getMaxDuration(day, startTimeIndex, currentBlockId) {
     let maxSlots = timeSlots.length - startTimeIndex;
 
-    // Prüfen bis zum nächsten Block
-    for (let i = 1; i < maxSlots; i++) {
+    // Prüfen bis zum nächsten Block (ab dem ersten Slot nach dem aktuellen Block)
+    for (let i = 0; i < maxSlots; i++) {
         const checkKey = `${day}-${startTimeIndex + i}`;
         const blockingId = scheduledBlocks[checkKey];
 
