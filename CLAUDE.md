@@ -162,7 +162,8 @@ npx serve .
 ├── wochenplan.css      # Complete styling (responsive, sticky navigation)
 ├── wochenplan.js       # Application logic and state management
 ├── README.md          # User documentation (German)
-└── CLAUDE.md          # Developer documentation
+├── CLAUDE.md          # Developer documentation
+└── .gitignore         # Git exclusions (test artifacts)
 ```
 
 ## Important Implementation Details
@@ -256,6 +257,27 @@ npx serve .
 - **Overlay controls**: Edit/delete buttons on activity blocks appear on hover with semi-transparent background
 
 ## Testing and Quality Assurance
+
+### Automated Testing with Playwright
+
+The application supports automated browser testing via Playwright MCP (Model Context Protocol):
+
+**Test Coverage:**
+- Welcome Screen navigation and hash-based routing
+- Auto-fill algorithm for all age groups (6-10, 11-14, 15-18)
+- Drag-and-drop functionality (adding activities to calendar)
+- Block resizing (extending/reducing activity duration)
+- LocalStorage persistence (save/load plans)
+- Collision detection and validation
+
+**WSL Environment Setup:**
+- Playwright expects Chromium at `/opt/google/chrome/chrome`
+- WSL typically installs at `/usr/bin/chromium-browser`
+- Solution: Create symlink `sudo ln -sf /usr/bin/chromium-browser /opt/google/chrome/chrome`
+
+**Test Artifacts:**
+- Screenshots saved to `.playwright-mcp/` directory
+- Directory excluded via `.gitignore` (not tracked in version control)
 
 ### Manual Testing Workflow
 1. **Time configuration**: Test all grid intervals (5-30 min)

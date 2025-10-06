@@ -131,6 +131,7 @@ Der Auto-Fill erstellt ein **Grundgerüst** mit 5 Kern-Aktivitäten:
 - 📌 **Sticky Positioning:** Moderne CSS-Technik für fixierte Navigation
 - 🎯 **Z-Index-Hierarchie:** Korrekte Überlagerung von UI-Elementen beim Scrollen
 - 📱 **Mobile-First:** Responsive mit 3 Breakpoints (1024px, 768px, 480px)
+- 🧪 **Getestet:** Automatisierte Browser-Tests mit Playwright
 
 ## 📖 Bedienung
 
