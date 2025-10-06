@@ -4,11 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a German-language weekly planning application for children's activities built as a single-page HTML/CSS/JavaScript application. The app features intelligent auto-fill algorithms, configurable time settings, drag-and-drop functionality with resize handles, and comprehensive activity management for scheduling weekly plans.
+This is a German-language weekly planning application for children's activities built as a single-page
+HTML/CSS/JavaScript application. The app features intelligent auto-fill algorithms, configurable time settings,
+drag-and-drop functionality with resize handles, and comprehensive activity management for scheduling weekly plans.
 
 ## Architecture
 
 ### Modular Application Structure
+
 - `wochenplan.html` - Main HTML structure with Welcome Screen and app layout
 - `wochenplan.css` - Complete styling with responsive design and sticky navigation
 - `wochenplan.js` - All application logic and state management
@@ -16,6 +19,7 @@ This is a German-language weekly planning application for children's activities 
 - Runs completely offline in any modern browser
 
 ### Data Storage Strategy
+
 The application uses Browser LocalStorage for all data persistence:
 
 1. **Activities**: Predefined activities with descriptions embedded in JavaScript
@@ -79,6 +83,7 @@ placedActivitiesByDay = {
 ## Core Functionality
 
 ### Welcome Screen & Navigation
+
 - **Initial state**: Shows Welcome Screen on first visit or when no active plan exists
 - **Hash-based navigation**: Uses `#welcome` and `#app` for state management
 - **SessionStorage persistence**: F5 reload preserves plan state during browser session
@@ -86,6 +91,7 @@ placedActivitiesByDay = {
 - **Plan detection**: Automatically shows app if active plan exists in LocalStorage
 
 ### Intelligent Auto-Fill System (Simplified Algorithm)
+
 - **Age-based scheduling**: Different defaults for 6-10, 11-14, 15-18 years
 - **5 Core Activities Only**: School, Hausaufgaben, Üben, Sport, random Musikinstrument
 - **Official Recommendations**: Based on Kultusministerium, WHO, and Lerntherapie
@@ -94,6 +100,7 @@ placedActivitiesByDay = {
 - **Balance Validator**: Shows weekly goal achievement in console
 
 #### Auto-Fill Algorithm Rules (2025 Simplified)
+
 1. **Allowed Activities Filter**: Only 5 core activities placed automatically
    - Schule, Hausaufgaben, Üben, Sport
    - Musikinstrumente: Klavierunterricht/Klavier, Trompetenunterricht/Trompete, Saxophonunterricht/Saxophon
@@ -106,12 +113,14 @@ placedActivitiesByDay = {
 8. **No activities before school**: `isBeforeSchool()` validation in `findBestTimeSlot()`
 
 ### Drag & Drop System
+
 - **Source**: Activity blocks in sidebar (copy operation)
 - **Target**: Calendar grid cells (10-minute slots)
 - **Collision Detection**: Prevents overlapping blocks
 - **Move Operation**: Existing blocks can be repositioned
 
 ### Activity Management
+
 - **Predefined activities**: 15 default activities with descriptions
 - **CRUD operations**: Modal interface for custom activities
 - **Auto-sync**: New activities automatically added to LocalStorage
@@ -123,6 +132,7 @@ placedActivitiesByDay = {
 - **Legacy cleanup**: `cleanupLegacyData()` handles app updates
 
 ### Plan Management Workflow
+
 1. **Create**: "📋 Neuer Plan" with custom name and age selection
 2. **Auto-fill**: "🤖 Plan erstellen" generates basic weekly schedule (5 core activities only)
    - Shows official recommendations (Hausaufgaben, Üben, Sport) with links
@@ -144,6 +154,7 @@ placedActivitiesByDay = {
 ## Development Commands
 
 ### Running the Application
+
 ```bash
 # Simply open in browser - no server required
 open wochenplan.html
@@ -156,7 +167,8 @@ npx serve .
 ```
 
 ### File Structure
-```
+
+```text
 /
 ├── wochenplan.html     # Main HTML structure with modals
 ├── wochenplan.css      # Complete styling (responsive, sticky navigation)
@@ -169,6 +181,7 @@ npx serve .
 ## Important Implementation Details
 
 ### Configurable Time Grid System
+
 - **Dynamic generation**: `generateTimeSlots()` based on user settings
 - **Flexible intervals**: 5, 10, 15, or 30-minute time grids
 - **Custom hours**: User-definable start and end times
@@ -176,14 +189,17 @@ npx serve .
 - **Cell mapping**: Each cell has `data-day` and `data-time-index` for positioning
 
 ### Block Positioning & Resizing
+
 - Blocks use absolute positioning within calendar cells
-- Height calculated dynamically based on `timeSettings.timeStep`: `(duration/timeStep) * slotHeight - 4px`
+- Height calculated dynamically based on `timeSettings.timeStep`:
+  `(duration/timeStep) * slotHeight - 4px`
 - Collision detection checks consecutive time slots
 - **Resize handles**: Top and bottom handles allow duration adjustment
 - **Resize logic**: Minimum duration is one time slot, maximum until next block or end of day
 - **Visual feedback**: Resizing class shows semi-transparent block during resize
 
 ### Browser Compatibility
+
 - Uses modern JavaScript (async/await, fetch)
 - Requires ES6+ support
 - LocalStorage for persistence
@@ -191,9 +207,10 @@ npx serve .
 
 ## Key Functions to Understand
 
-#### Core Functions
+### Core Functions
 
 **Navigation & Welcome Screen:**
+
 - `initNavigation()`: Initialize hash-based navigation and determine initial screen
 - `navigateToWelcome()`: Show Welcome Screen, hide main app
 - `navigateToApp()`: Hide Welcome Screen, show main app
@@ -201,19 +218,24 @@ npx serve .
 - `createNewPlanFromWelcome()` / `loadPlanFromWelcome()`: Welcome Screen action handlers
 
 **Auto-Fill & Planning:**
+
 - `autoFillWeekPlan(ageGroup)`: Intelligent weekly schedule generation (simplified algorithm)
 - `placeActivityInSchedule(activity, ageGroup)`: Filters allowed activities and routes to placement
 - `validateWeekBalance(ageGroup)`: Balance validator showing weekly goal achievement
 - `selectSingleInstrument()`: Ensures only one instrument per child (random selection)
 - `hasActivityOnDay(day, activityName)`: Generic function to check activity placement
-- `hasHomeworkOnDay(day)` / `hasAGOnDay(day)` / `hasHomeworkSupervisionOnDay(day)`: Specific helper functions using generic check
+- `hasHomeworkOnDay(day)` / `hasAGOnDay(day)` / `hasHomeworkSupervisionOnDay(day)`:
+  Specific helper functions using generic check
 - `isBeforeSchool(day, timeIndex)`: Validates no activities before school start
-- `findBestTimeSlot(day, durationMinutes, preferredTimes, activityName)`: Finds free slot with validation
-- `createScheduledBlock(activity, day, timeIndex, durationMinutes)`: Creates block with collision check, returns true/false
+- `findBestTimeSlot(day, durationMinutes, preferredTimes, activityName)`:
+  Finds free slot with validation
+- `createScheduledBlock(activity, day, timeIndex, durationMinutes)`:
+  Creates block with collision check, returns true/false
 - `placeSchoolBlocks()` / `placeHomeworkBlocks()`: Smart activity placement (simplified)
 - `findSchoolEndTime(day)` / `findLatestHomeworkEnd(day)`: Helper functions for sequential placement
 
 **UI & Interaction:**
+
 - `generateTimeSlots()`: Dynamic time grid based on settings
 - `moveScheduledBlock()`: Drag-and-drop with collision detection
 - `setupResizeEvents()`: Initialize resize handles for blocks
@@ -221,6 +243,7 @@ npx serve .
 - `updateBlockAfterResize()`: Update block data and scheduledBlocks after resize
 
 **Data Management:**
+
 - `saveWeek()`: Auto-save both scheduledBlocks and blockRegistry to LocalStorage (active plan)
 - `loadWeek()`: Load active plan from LocalStorage with registry migration support
 - `getSavedPlans()`: Retrieve all saved plans from LocalStorage
@@ -263,6 +286,7 @@ npx serve .
 The application supports automated browser testing via Playwright MCP (Model Context Protocol):
 
 **Test Coverage:**
+
 - Welcome Screen navigation and hash-based routing
 - Auto-fill algorithm for all age groups (6-10, 11-14, 15-18)
 - Drag-and-drop functionality (adding activities to calendar)
@@ -271,15 +295,18 @@ The application supports automated browser testing via Playwright MCP (Model Con
 - Collision detection and validation
 
 **WSL Environment Setup:**
+
 - Playwright expects Chromium at `/opt/google/chrome/chrome`
 - WSL typically installs at `/usr/bin/chromium-browser`
 - Solution: Create symlink `sudo ln -sf /usr/bin/chromium-browser /opt/google/chrome/chrome`
 
 **Test Artifacts:**
+
 - Screenshots saved to `.playwright-mcp/` directory
 - Directory excluded via `.gitignore` (not tracked in version control)
 
 ### Manual Testing Workflow
+
 1. **Time configuration**: Test all grid intervals (5-30 min)
 2. **Auto-fill testing**: Verify all age groups generate realistic plans
 3. **Conflict resolution**: Ensure no homework/homework supervision overlaps
@@ -290,7 +317,8 @@ The application supports automated browser testing via Playwright MCP (Model Con
 ### Common Issues and Solutions
 
 - **Missing activities**: Check `loadActivities()` - new activities are auto-added from `defaultActivities`
-- **Activity name/color not updating**: Check `mergeWithAgeDefaults()` - always uses defaults for color and handles name migrations
+- **Activity name/color not updating**: Check `mergeWithAgeDefaults()` - always uses defaults for color and
+  handles name migrations
 - **Auto-fill conflicts**: Verify `placedActivitiesByDay` tracking
 - **Time grid errors**: Ensure `timeSettings` are valid
 - **Drag issues**: Check `scheduledBlocks` state consistency
@@ -304,6 +332,7 @@ The application supports automated browser testing via Playwright MCP (Model Con
 ### Recent Optimizations (2025)
 
 #### October 2025 (Plan Management Overhaul)
+
 1. **LocalStorage-based Plan Management**: Plans saved directly in browser instead of file downloads
    - `savedPlans` key stores multiple plans with metadata
    - Save modal with overwrite warning for existing plans
@@ -326,6 +355,7 @@ The application supports automated browser testing via Playwright MCP (Model Con
    - "📥 Import" (JSON upload)
 
 #### October 2025 (UI/UX Overhaul - Scrolling & Navigation)
+
 1. **Welcome Screen Implementation**: Professional landing page with gradient background
    - App description and feature highlights
    - Two clear CTAs: Create new plan or load existing plan
@@ -355,14 +385,18 @@ The application supports automated browser testing via Playwright MCP (Model Con
 8. **Smooth Scrolling**: CSS `scroll-behavior: smooth` enabled
 
 #### Early 2025
-1. **Removed redundant CSS classes**: All activity-specific CSS classes (`.trompete`, `.hausaufgaben`, etc.) removed - colors now applied dynamically
+
+1. **Removed redundant CSS classes**: All activity-specific CSS classes (`.trompete`, `.hausaufgaben`, etc.)
+   removed - colors now applied dynamically
 2. **Generalized helper functions**: `hasActivityOnDay(day, activityName)` replaces three specific functions
 3. **Simplified cleanup**: `cleanupLegacyData()` reduced to only handle old week plan format
 4. **Centralized migrations**: Activity updates (names, colors) handled in `mergeWithAgeDefaults()`
 5. **Auto-add missing activities**: `loadActivities()` automatically adds new activities from defaults
 
 #### October 2025 (Major AutoFill Overhaul)
-1. **Simplified AutoFill Algorithm**: Only 5 core activities (Schule, Hausaufgaben, Üben, Sport, Musikinstrument)
+
+1. **Simplified AutoFill Algorithm**: Only 5 core activities (Schule, Hausaufgaben, Üben, Sport,
+   Musikinstrument)
    - `allowedActivities` filter in `placeActivityInSchedule()`
    - Manual placement required for AG, Hausaufgabenbetreuung, Freunde, Oma, Haustier, Freizeit
 2. **Official Recommendations Integration**: Values based on research
