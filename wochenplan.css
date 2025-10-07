@@ -169,6 +169,7 @@ h1 {
 
 .scheduled-block {
     /* ✅ Grid-Positionierung via JavaScript (gridRowStart/End, gridColumn) */
+    position: relative; /* ✅ Needed für absolute-positioned children (resize-handles, remove-btn) */
     border-radius: 3px;
     color: #fff;
     font-size: 11px;

@@ -62,6 +62,19 @@ function addScheduledBlock(day, timeIndex, activity, duration) {
     hasUnsavedChanges = true;
 }
 
+// Helper: Zeitslots für einen Block blockieren (für Storage/Autofill)
+function occupyTimeSlots(day, startMinutes, durationMinutes, blockId) {
+    // startMinutes in timeIndex umrechnen
+    const startTimeIndex = Math.floor(startMinutes / timeSettings.timeStep);
+    const durationSlots = Math.ceil(durationMinutes / timeSettings.timeStep);
+
+    // Alle Slots blockieren
+    for (let i = 0; i < durationSlots; i++) {
+        const key = `${day}-${startTimeIndex + i}`;
+        scheduledBlocks[key] = blockId;
+    }
+}
+
 // Geplanten Block darstellen
 function renderScheduledBlock(block) {
     // ✅ Holt Grid-Container (nicht einzelne Zelle!)

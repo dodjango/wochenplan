@@ -3,6 +3,15 @@
 // ========================================
 
 // Hilfsfunktion: Prüft ob ein Zeitbereich frei ist
+// Helper: Gesamtanzahl verfügbarer Minuten pro Tag berechnen
+function getTotalDayMinutes() {
+    const [startHour, startMinute] = timeSettings.startTime.split(':').map(Number);
+    const [endHour, endMinute] = timeSettings.endTime.split(':').map(Number);
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+    return endTotalMinutes - startTotalMinutes;
+}
+
 function isTimeRangeFree(day, startMinutes, durationMinutes) {
     const timeStepMinutes = timeSettings.timeStep;
     const startTimeIndex = Math.floor(startMinutes / timeStepMinutes);
