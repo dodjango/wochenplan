@@ -207,7 +207,14 @@ h1 {
     right: 0;
     height: 8px;
     z-index: 15;
-    cursor: ns-resize
+    cursor: ns-resize;
+    display: none;
+    transition: opacity 0.2s ease
+}
+
+.scheduled-block:hover .resize-handle {
+    display: block;
+    opacity: 1
 }
 
 .resize-handle-top {
@@ -218,7 +225,7 @@ h1 {
     bottom: 0
 }
 
-.resize-handle:hover {
+.scheduled-block:hover .resize-handle:hover {
     background: rgba(255, 255, 255, .3)
 }
 
@@ -826,15 +833,6 @@ h1 {
    WCAG 2.1 AAA: 44px Touch-Target
    ======================================== */
 
-.resize-handle {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: 8px;
-    z-index: 15;
-    cursor: ns-resize;
-}
-
 /* Touch-Target erweitern (unsichtbar) */
 .resize-handle::before {
     content: '';
@@ -844,6 +842,11 @@ h1 {
     height: 44px; /* WCAG AAA */
     background: transparent;
     cursor: ns-resize;
+    display: none; /* Versteckt bis Hover */
+}
+
+.scheduled-block:hover .resize-handle::before {
+    display: block;
 }
 
 .resize-handle-top::before {
@@ -858,6 +861,8 @@ h1 {
 /* Touch-Geräte: Handles immer sichtbar */
 @media (hover: none) and (pointer: coarse) {
     .resize-handle {
+        display: block; /* Immer sichtbar auf Touch-Geräten */
+        opacity: 1;
         background: rgba(255, 255, 255, 0.3);
         height: 8px;
     }
