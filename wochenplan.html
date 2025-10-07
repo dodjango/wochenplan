@@ -224,7 +224,15 @@
     <!-- Verstecktes File-Input für Plan laden -->
     <input type="file" id="loadPlanInput" accept=".json" style="display: none;" onchange="handleLoadPlan(event)">
 
-    <script src="wochenplan.js"></script>
+    <!-- Modulare JavaScript-Dateien (Reihenfolge wichtig!) -->
+    <script src="wochenplan-config.js"></script>
+    <script src="wochenplan-storage.js"></script>
+    <script src="wochenplan-activities.js"></script>
+    <script src="wochenplan-calendar.js"></script>
+    <script src="wochenplan-blocks.js"></script>
+    <script src="wochenplan-autofill.js"></script>
+    <script src="wochenplan-ui.js"></script>
+    <script src="wochenplan-main.js"></script>
 </body>
 
 </html>
