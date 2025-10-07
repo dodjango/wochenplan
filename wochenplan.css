@@ -1121,3 +1121,81 @@ select:focus-visible {
     border-color: #4CAF50;
     box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
 }
+
+/* ========================================
+   CURSOR-FOLLOWING TOOLTIP
+   ======================================== */
+
+.block-tooltip {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.92);
+    color: #ffffff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    max-width: 280px;
+    opacity: 0;
+    transition: opacity 0.15s ease-in-out;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.block-tooltip.visible {
+    opacity: 1;
+}
+
+.block-tooltip-name {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 4px;
+}
+
+.block-tooltip-time {
+    font-size: 13px;
+    margin-bottom: 4px;
+    color: #e0e0e0;
+    font-family: 'Courier New', monospace;
+}
+
+.block-tooltip-description {
+    font-size: 12px;
+    color: #d0d0d0;
+    margin-top: 6px;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+/* Mobile: Optimierungen für Touch-Geräte */
+@media (max-width: 768px) {
+    .block-tooltip {
+        font-size: 12px;
+        padding: 10px 14px;
+        max-width: 240px;
+    }
+
+    .block-tooltip-name {
+        font-size: 13px;
+    }
+
+    .block-tooltip-time {
+        font-size: 12px;
+    }
+
+    .block-tooltip-description {
+        font-size: 11px;
+    }
+}
+
+/* Touch-Geräte: Tooltip bleibt länger sichtbar */
+@media (hover: none) and (pointer: coarse) {
+    .block-tooltip {
+        transition: opacity 0.2s ease-in-out;
+    }
+}

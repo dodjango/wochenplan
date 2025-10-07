@@ -2,6 +2,212 @@
 // BLOCK-VERWALTUNG (Drag & Drop, Resize)
 // ========================================
 
+// ========================================
+// TOOLTIP-SYSTEM
+// ========================================
+
+// Singleton Tooltip-Element
+let tooltipElement = null;
+let currentTooltipBlock = null;
+let tooltipMouseMoveHandler = null;
+let tooltipHideTimeout = null;
+const TOOLTIP_OFFSET_X = 15;
+const TOOLTIP_OFFSET_Y = 15;
+const TOOLTIP_HIDE_DELAY = 200; // ms - Verzögerung vor dem Ausblenden auf Touch-Geräten
+
+// Tooltip-Element erstellen (lazy initialization)
+function getTooltipElement() {
+    if (!tooltipElement) {
+        tooltipElement = document.createElement('div');
+        tooltipElement.className = 'block-tooltip';
+        tooltipElement.setAttribute('role', 'tooltip');
+        tooltipElement.setAttribute('aria-live', 'polite');
+        document.body.appendChild(tooltipElement);
+    }
+    return tooltipElement;
+}
+
+// Tooltip-Inhalt generieren
+function generateTooltipContent(block) {
+    const tooltip = getTooltipElement();
+
+    // Zeitberechnung: timeIndex ist in timeStep-Einheiten ab Tagesbeginn (startTime)
+    const startTimeIndex = block.timeIndex;
+    const endTimeIndex = block.timeIndex + Math.floor(block.duration / timeSettings.timeStep);
+
+    // Parse startTime aus Einstellungen (z.B. "06:00")
+    const [dayStartHour, dayStartMinute] = timeSettings.startTime.split(':').map(Number);
+    const dayStartMinutes = dayStartHour * 60 + dayStartMinute;
+
+    // Berechne absolute Minuten ab Mitternacht
+    const startMinutesFromMidnight = dayStartMinutes + (startTimeIndex * timeSettings.timeStep);
+    const endMinutesFromMidnight = dayStartMinutes + (endTimeIndex * timeSettings.timeStep);
+
+    // Konvertiere zu Stunden und Minuten
+    const startHour = Math.floor(startMinutesFromMidnight / 60);
+    const startMin = startMinutesFromMidnight % 60;
+    const endHour = Math.floor(endMinutesFromMidnight / 60);
+    const endMin = endMinutesFromMidnight % 60;
+
+    const startTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+    const endTime = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+
+    // HTML-Content erstellen
+    let content = `<div class="block-tooltip-name">${escapeHtml(block.activity.name)}</div>`;
+    content += `<div class="block-tooltip-time">${startTime} - ${endTime} (${block.duration} Min)</div>`;
+
+    if (block.activity.description && block.activity.description.trim()) {
+        content += `<div class="block-tooltip-description">${escapeHtml(block.activity.description)}</div>`;
+    }
+
+    tooltip.innerHTML = content;
+}
+
+// HTML-Escape-Funktion für XSS-Schutz
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Tooltip-Position berechnen (mit Viewport-Kollisionsvermeidung)
+function positionTooltip(mouseX, mouseY) {
+    const tooltip = getTooltipElement();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let x = mouseX + TOOLTIP_OFFSET_X;
+    let y = mouseY + TOOLTIP_OFFSET_Y;
+
+    // Rechte Viewport-Grenze prüfen
+    if (x + tooltipRect.width > viewportWidth - 10) {
+        x = mouseX - tooltipRect.width - TOOLTIP_OFFSET_X;
+    }
+
+    // Untere Viewport-Grenze prüfen
+    if (y + tooltipRect.height > viewportHeight - 10) {
+        y = mouseY - tooltipRect.height - TOOLTIP_OFFSET_Y;
+    }
+
+    // Linke Viewport-Grenze prüfen
+    if (x < 10) {
+        x = 10;
+    }
+
+    // Obere Viewport-Grenze prüfen
+    if (y < 10) {
+        y = 10;
+    }
+
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+}
+
+// Tooltip anzeigen
+function showTooltip(block, initialX, initialY) {
+    // Bestehenden Hide-Timeout abbrechen
+    if (tooltipHideTimeout) {
+        clearTimeout(tooltipHideTimeout);
+        tooltipHideTimeout = null;
+    }
+
+    currentTooltipBlock = block;
+    const tooltip = getTooltipElement();
+
+    // Content generieren
+    generateTooltipContent(block);
+
+    // Position setzen (muss nach Content-Generierung erfolgen für korrekte Größe)
+    positionTooltip(initialX, initialY);
+
+    // Sichtbar machen
+    requestAnimationFrame(() => {
+        tooltip.classList.add('visible');
+    });
+}
+
+// Tooltip ausblenden
+function hideTooltip() {
+    const tooltip = getTooltipElement();
+    tooltip.classList.remove('visible');
+    currentTooltipBlock = null;
+
+    // MouseMove-Handler entfernen
+    if (tooltipMouseMoveHandler) {
+        document.removeEventListener('mousemove', tooltipMouseMoveHandler);
+        tooltipMouseMoveHandler = null;
+    }
+}
+
+// Tooltip auf Mouse-Move aktualisieren
+function updateTooltipPosition(e) {
+    if (currentTooltipBlock) {
+        positionTooltip(e.clientX, e.clientY);
+    }
+}
+
+// Tooltip an Block anbinden
+function attachTooltipToBlock(element, block) {
+    // Desktop: Hover-basiert mit Cursor-Following
+    element.addEventListener('mouseenter', (e) => {
+        // Nicht anzeigen wenn gerade resized oder gedragged wird
+        if (isResizing || element.classList.contains('dragging')) {
+            return;
+        }
+
+        showTooltip(block, e.clientX, e.clientY);
+
+        // MouseMove-Handler für Cursor-Following
+        tooltipMouseMoveHandler = updateTooltipPosition;
+        document.addEventListener('mousemove', tooltipMouseMoveHandler);
+    });
+
+    element.addEventListener('mouseleave', () => {
+        hideTooltip();
+    });
+
+    // Touch-Geräte: Tap-to-Show mit Auto-Hide
+    if ('ontouchstart' in window) {
+        let touchTimeout = null;
+
+        element.addEventListener('touchstart', (e) => {
+            // Wenn bereits ein anderer Tooltip sichtbar ist, verstecke ihn
+            if (currentTooltipBlock && currentTooltipBlock.id !== block.id) {
+                hideTooltip();
+            }
+
+            // Touch-Position ermitteln
+            const touch = e.touches[0];
+            const touchX = touch.clientX;
+            const touchY = touch.clientY;
+
+            // Tooltip anzeigen
+            showTooltip(block, touchX, touchY);
+
+            // Auto-Hide nach 3 Sekunden
+            if (touchTimeout) clearTimeout(touchTimeout);
+            touchTimeout = setTimeout(() => {
+                hideTooltip();
+            }, 3000);
+        }, { passive: true });
+
+        // Bei Touch-Ende: verzögertes Ausblenden
+        element.addEventListener('touchend', () => {
+            tooltipHideTimeout = setTimeout(() => {
+                hideTooltip();
+            }, TOOLTIP_HIDE_DELAY);
+        }, { passive: true });
+    }
+}
+
+// Cleanup-Funktion (für Resize/Drag)
+function cleanupTooltip() {
+    if (currentTooltipBlock) {
+        hideTooltip();
+    }
+}
+
 // Geplanten Block hinzufügen
 function addScheduledBlock(day, timeIndex, activity, duration) {
     const blockId = Date.now().toString();
@@ -89,11 +295,8 @@ function renderScheduledBlock(block) {
     element.dataset.blockId = block.id;
     element.draggable = true;
 
-    // ✅ Tooltip mit Zeitinformationen (wichtig für UX!)
-    const startTime = timeSlots[Math.floor(block.timeIndex / (60 / timeSettings.timeStep))];
-    const endTimeIndex = block.timeIndex + Math.floor(block.duration / timeSettings.timeStep);
-    const endTime = timeSlots[Math.floor(endTimeIndex / (60 / timeSettings.timeStep))];
-    element.title = `${block.activity.name}\n${startTime} - ${endTime} (${block.duration} Min)\n${block.activity.description || ''}`;
+    // ✅ Entferne native Browser-Tooltip (wird durch unseren ersetzt)
+    // element.title wird NICHT gesetzt - wir verwenden stattdessen unseren Custom-Tooltip
 
     // ✅ Grid-Position berechnen (5-Minuten-Grid!)
     const GRID_STEP = 5; // Grid hat 5-Minuten-Zeilen
@@ -150,6 +353,10 @@ function renderScheduledBlock(block) {
             e.preventDefault();
             return;
         }
+
+        // Tooltip verstecken während Drag
+        cleanupTooltip();
+
         currentDraggedBlock = block;
         draggedActivity = null;
         e.dataTransfer.effectAllowed = 'move';
@@ -196,6 +403,9 @@ function renderScheduledBlock(block) {
         addTouchEventsToScheduledBlock(element, block);
     }
 
+    // ✅ Custom Tooltip anbinden
+    attachTooltipToBlock(element, block);
+
     // ✅ Direkt ins Grid einfügen (NICHT in cell)
     grid.appendChild(element);
 }
@@ -209,6 +419,9 @@ function setupResizeEvents(element, block, handle, direction) {
     handle.addEventListener('mousedown', (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // Tooltip verstecken während Resize
+        cleanupTooltip();
 
         // Resize-Modus starten
         isResizing = true;
