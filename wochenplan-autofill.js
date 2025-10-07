@@ -2,6 +2,22 @@
 // AUTO-FILL ALGORITHMUS
 // ========================================
 
+// Hilfsfunktion: Prüft ob ein Zeitbereich frei ist
+function isTimeRangeFree(day, startMinutes, durationMinutes) {
+    const timeStepMinutes = timeSettings.timeStep;
+    const startTimeIndex = Math.floor(startMinutes / timeStepMinutes);
+    const durationSlots = Math.ceil(durationMinutes / timeStepMinutes);
+
+    for (let i = 0; i < durationSlots; i++) {
+        const checkTimeIndex = startTimeIndex + i;
+        const checkKey = `${day}-${checkTimeIndex}`;
+        if (scheduledBlocks[checkKey]) {
+            return false; // Zeitbereich ist belegt
+        }
+    }
+    return true; // Zeitbereich ist frei
+}
+
 // Hauptfunktion für automatisches Füllen
 function autoFillWeekPlan(ageGroup) {
     console.log(`Erstelle Wochenplan für Altersgruppe: ${ageGroup}`);

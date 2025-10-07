@@ -168,9 +168,7 @@ h1 {
 }
 
 .scheduled-block {
-    position: absolute;
-    left: 2px;
-    right: 2px;
+    /* ✅ Grid-Positionierung via JavaScript (gridRowStart/End, gridColumn) */
     border-radius: 3px;
     color: #fff;
     font-size: 11px;
@@ -182,7 +180,9 @@ h1 {
     overflow: hidden;
     display: flex;
     align-items: center;
-    justify-content: center
+    justify-content: center;
+    padding: 4px;
+    margin: 2px
 }
 
 .scheduled-block.resize-top,
