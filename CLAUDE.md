@@ -10,14 +10,6 @@ drag-and-drop functionality with resize handles, and comprehensive activity mana
 
 ## Architecture
 
-### Modular Application Structure
-
-- `wochenplan.html` - Main HTML structure with Welcome Screen and app layout
-- `wochenplan.css` - Complete styling with responsive design and sticky navigation
-- `wochenplan-*.js` - Modular JavaScript (8 files: config, calendar, activities, blocks, autofill, storage, ui, main)
-
-### Local-Only Application Design
-
 **CRITICAL: This is NOT a web application - it's a local desktop/mobile tool**
 
 - **Double-Click Startup**: Users download the files and double-click `wochenplan.html` to open in browser
@@ -44,7 +36,7 @@ This design ensures maximum accessibility for non-technical parents who want a s
 ├── wochenplan-ui.js            # UI controls, modals, navigation
 ├── wochenplan-main.js          # Application initialization and coordination
 ├── README.md                   # User documentation (German)
-├── CLAUDE.md                   # Developer documentation
+├── CLAUDE.md                   # Developer documentation and claude code memory
 ├── screenshot.png              # Application preview image
 ├── .gitignore                  # Git exclusions (test artifacts)
 └── docs/                       # Detailed technical documentation
@@ -69,7 +61,7 @@ Before generating, modifying, or refactoring any code, you MUST:
 2. **Use Project-Specific Agents** - These agents are configured with deep knowledge of this project:
 
    **ux-design-expert agent:**
-   - Use PROACTIVELY for any UI-related work
+   - Use PROACTIVELY for any UX/UI-related work
    - Expertise: User experience for parents, drag & drop, responsive design, vanilla CSS
    - When to use:
      - Implementing new UI features
@@ -100,7 +92,7 @@ Before generating, modifying, or refactoring any code, you MUST:
 ### Development Workflow
 
 1. **Before coding**: Read relevant docs files and understand existing patterns
-2. **During coding**: Use ux-design-expert for UI, javascript-expert for logic
+2. **During coding**: Use subagents ux-design-expert for UX/UI, javascript-expert for logic
 3. **After coding**: Test via Playwright MCP (file:// protocol) on multiple screen sizes
 
 ### Running the Application
@@ -117,3 +109,7 @@ npx serve .
 ```
 
 **Note**: While a local server is optional for development and testing, the application MUST always work when opened directly via double-click without a server.
+
+### Testing the Application
+
+It is IMPORTANT to check the visual layout and appearance. Use the Playwright MCP server to take screenshots for comparison and to verify the accuracy and validity of the output.

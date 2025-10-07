@@ -800,3 +800,324 @@ h1 {
         padding: 12px 20px
     }
 }
+
+/* ========================================
+   KRITISCHE VERBESSERUNGEN
+   ======================================== */
+
+/* ========================================
+   SCREEN-READER ONLY CLASS
+   ======================================== */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+/* ========================================
+   TOUCH-OPTIMIERTE RESIZE-HANDLES
+   WCAG 2.1 AAA: 44px Touch-Target
+   ======================================== */
+
+.resize-handle {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 8px;
+    z-index: 15;
+    cursor: ns-resize;
+}
+
+/* Touch-Target erweitern (unsichtbar) */
+.resize-handle::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 44px; /* WCAG AAA */
+    background: transparent;
+    cursor: ns-resize;
+}
+
+.resize-handle-top::before {
+    top: -18px;
+}
+
+.resize-handle-bottom::before {
+    bottom: -18px;
+    top: auto;
+}
+
+/* Touch-Geräte: Handles immer sichtbar */
+@media (hover: none) and (pointer: coarse) {
+    .resize-handle {
+        background: rgba(255, 255, 255, 0.3);
+        height: 8px;
+    }
+
+    .resize-handle::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 2px;
+    }
+}
+
+/* ========================================
+   RESPONSIVE TYPOGRAPHY
+   ======================================== */
+
+.scheduled-block {
+    font-size: 13px; /* Desktop */
+    line-height: 1.3;
+    font-weight: 600;
+}
+
+/* Dynamische Anpassung basierend auf Block-Höhe */
+.scheduled-block[data-height="small"] {
+    font-size: 11px;
+    padding: 2px 4px;
+}
+
+.scheduled-block[data-height="medium"] {
+    font-size: 12px;
+}
+
+.scheduled-block[data-height="large"] {
+    font-size: 13px;
+    padding-top: 8px;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+    .scheduled-block {
+        font-size: 12px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+    .scheduled-block {
+        font-size: 10px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Bessere Lesbarkeit */
+        font-weight: 700;
+    }
+}
+
+/* ========================================
+   RESPONSIVE CALENDAR GRID
+   7-Tage-Layout mit Horizontal-Scroll auf Mobile
+   ======================================== */
+
+/* Desktop (1024px+): Standard - bereits definiert */
+
+/* Tablet (768px - 1024px) */
+@media (max-width: 1024px) {
+    .calendar-grid {
+        grid-template-columns: 60px repeat(7, minmax(100px, 1fr));
+        min-width: 760px;
+    }
+
+    .calendar {
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch; /* iOS Momentum */
+    }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 768px) {
+    .calendar-grid {
+        grid-template-columns: 50px repeat(7, minmax(90px, 1fr));
+        min-width: 680px;
+    }
+
+    .calendar {
+        scroll-snap-type: x proximity;
+    }
+
+    /* Scrollbar Styling */
+    .calendar::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .calendar::-webkit-scrollbar-thumb {
+        background: #667eea;
+        border-radius: 3px;
+    }
+}
+
+/* Sehr kleine Mobile (< 480px) */
+@media (max-width: 480px) {
+    .calendar-grid {
+        grid-template-columns: 45px repeat(7, minmax(75px, 1fr));
+        min-width: 570px;
+    }
+}
+
+/* ========================================
+   TOAST NOTIFICATION SYSTEM
+   ======================================== */
+
+.toast-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.toast {
+    background: white;
+    border-radius: 8px;
+    padding: 16px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    pointer-events: auto;
+    animation: slideInRight 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    max-width: 400px;
+}
+
+.toast.toast-visible {
+    opacity: 1;
+}
+
+.toast.toast-hiding {
+    animation: slideOutRight 0.3s ease-in;
+}
+
+.toast-error { border-left: 4px solid #dc3545; }
+.toast-success { border-left: 4px solid #28a745; }
+.toast-info { border-left: 4px solid #007bff; }
+.toast-warning { border-left: 4px solid #ffc107; }
+
+.toast-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.toast-error .toast-icon { background: #dc3545; color: white; }
+.toast-success .toast-icon { background: #28a745; color: white; }
+.toast-info .toast-icon { background: #007bff; color: white; }
+.toast-warning .toast-icon { background: #ffc107; color: #333; }
+
+.toast-message {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.toast-close {
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #999;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.toast-close:hover {
+    color: #333;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(400px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(400px); opacity: 0; }
+}
+
+/* Collision-Highlight Animation */
+.scheduled-block.collision-highlight {
+    animation: collision-pulse 0.5s ease-in-out 4;
+    z-index: 15 !important;
+}
+
+@keyframes collision-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7);
+        border: 2px solid transparent;
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(231, 76, 60, 0);
+        border: 2px solid #e74c3c;
+    }
+}
+
+/* Mobile Toast */
+@media (max-width: 480px) {
+    .toast-container {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+    }
+
+    .toast {
+        max-width: 100%;
+    }
+}
+
+/* ========================================
+   KEYBOARD FOCUS STYLES (WCAG 2.4.7 AA)
+   ======================================== */
+
+*:focus {
+    outline: none; /* Wird durch :focus-visible ersetzt */
+}
+
+*:focus-visible {
+    outline: 3px solid #4CAF50;
+    outline-offset: 2px;
+    border-radius: 4px;
+    position: relative;
+    z-index: 1000;
+}
+
+.scheduled-block.keyboard-focused {
+    outline: 3px solid #FFD700; /* Gold für aktiven Block */
+    outline-offset: 2px;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+    z-index: 10 !important;
+}
+
+.btn:focus-visible {
+    outline: 3px solid #4CAF50;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 5px rgba(76, 175, 80, 0.2);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 3px solid #4CAF50;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}

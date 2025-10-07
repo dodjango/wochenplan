@@ -233,13 +233,9 @@ function loadWeekData(data) {
             // Block in Registry speichern
             blockRegistry[block.id] = block;
 
-            const durationSlots = block.duration / timeSettings.timeStep;
-
-            // Zeitslots blockieren
-            for (let i = 0; i < durationSlots; i++) {
-                const key = `${block.day}-${block.timeIndex + i}`;
-                scheduledBlocks[key] = block.id;
-            }
+            // Zeitslots blockieren (mit korrekter 5-Minuten-Kollisionserkennung)
+            const startMinutes = timeIndexToMinutes(block.timeIndex);
+            occupyTimeSlots(block.day, startMinutes, block.duration, block.id);
 
             renderScheduledBlock(block);
         } else {
@@ -275,12 +271,20 @@ function loadWeek() {
             // Alle bestehenden Blöcke aus DOM entfernen
             document.querySelectorAll('.scheduled-block').forEach(el => el.remove());
 
+            // Collision-Map zurücksetzen
+            scheduledBlocks = {};
+
             // Blöcke aus Registry rendern
             Object.values(blockRegistry).forEach(block => {
                 // Aktivität mit aktuellen Daten mergen (für Farb-Updates etc.)
                 const activity = activities.find(a => a.name === block.activity.name);
                 if (activity) {
                     block.activity = activity;
+
+                    // Zeitslots blockieren (mit korrekter 5-Minuten-Kollisionserkennung)
+                    const startMinutes = timeIndexToMinutes(block.timeIndex);
+                    occupyTimeSlots(block.day, startMinutes, block.duration, block.id);
+
                     renderScheduledBlock(block);
                 } else {
                     console.warn(`Aktivität "${block.activity.name}" nicht gefunden, Block wird übersprungen`);

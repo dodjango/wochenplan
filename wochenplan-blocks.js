@@ -12,13 +12,29 @@ function addScheduledBlock(day, timeIndex, activity, duration) {
         const checkTimeIndex = timeIndex + i;
         // Prüfen ob der Zeitindex im gültigen Bereich liegt
         if (checkTimeIndex >= timeSlots.length) {
-            alert('Block passt nicht in den verfügbaren Zeitraum!');
+            // ✅ NEU: Toast statt Alert
+            if (typeof showToast === 'function') {
+                showToast('Block passt nicht in den verfügbaren Zeitraum!', 'error', 3000);
+            } else {
+                alert('Block passt nicht in den verfügbaren Zeitraum!');
+            }
             return;
         }
 
         const checkKey = `${day}-${checkTimeIndex}`;
         if (scheduledBlocks[checkKey]) {
-            alert('Dieser Zeitraum ist bereits belegt!');
+            // ✅ NEU: Collision-Feedback statt Alert
+            const blockingBlockId = scheduledBlocks[checkKey];
+            const blockingBlock = blockRegistry[blockingBlockId];
+            if (typeof showCollisionFeedback === 'function' && blockingBlock) {
+                showCollisionFeedback(blockingBlock, day, timeIndex);
+            } else {
+                if (typeof showToast === 'function') {
+                    showToast('Dieser Zeitraum ist bereits belegt!', 'error', 3000);
+                } else {
+                    alert('Dieser Zeitraum ist bereits belegt!');
+                }
+            }
             return;
         }
     }
@@ -58,12 +74,24 @@ function renderScheduledBlock(block) {
     element.textContent = block.activity.name;
     element.dataset.blockId = block.id;
     element.draggable = true;
-    element.title = block.activity.description || block.activity.name;
+
+    // ✅ NEU: Erweiterte Tooltip-Information mit Zeitangaben
+    const startTime = timeSlots[Math.floor(block.timeIndex / (60 / timeSettings.timeStep))];
+    const endTimeIndex = block.timeIndex + Math.floor(block.duration / timeSettings.timeStep);
+    const endTime = timeSlots[Math.floor(endTimeIndex / (60 / timeSettings.timeStep))];
+    element.title = `${block.activity.name}\n${startTime} - ${endTime} (${block.duration} Min)\n${block.activity.description || ''}`;
 
     const durationSlots = block.duration / timeSettings.timeStep;
     const slotHeight = calculateSlotHeight();
     element.style.height = `${durationSlots * slotHeight - 4}px`;
     element.style.top = '2px';
+
+    // ✅ NEU: Data-Attribut für responsive Typography
+    const blockHeightPx = (block.duration / 5) * 20; // 20px pro 5-Min-Zeile
+    let heightCategory = 'large';
+    if (blockHeightPx < 40) heightCategory = 'small';
+    else if (blockHeightPx < 80) heightCategory = 'medium';
+    element.setAttribute('data-height', heightCategory);
 
     // Löschen-Button
     const removeBtn = document.createElement('button');
@@ -130,6 +158,19 @@ function renderScheduledBlock(block) {
             cell.classList.remove('drop-zone');
         });
     });
+
+    // ✅ NEU: Keyboard-Fokus + ARIA
+    if (typeof addKeyboardFocusToBlock === 'function') {
+        addKeyboardFocusToBlock(element, block.id);
+    }
+    if (typeof updateAriaForBlock === 'function') {
+        updateAriaForBlock(element, block);
+    }
+
+    // ✅ NEU: Touch-Events für Mobile/Tablet
+    if (typeof addTouchEventsToScheduledBlock === 'function') {
+        addTouchEventsToScheduledBlock(element, block);
+    }
 
     cell.appendChild(element);
 }
@@ -326,7 +367,12 @@ function moveScheduledBlock(block, newDay, newTimeIndex) {
         const checkTimeIndex = newTimeIndex + i;
         // Prüfen ob der Zeitindex im gültigen Bereich liegt
         if (checkTimeIndex >= timeSlots.length) {
-            alert('Block passt nicht in den verfügbaren Zeitraum!');
+            // ✅ NEU: Toast statt Alert
+            if (typeof showToast === 'function') {
+                showToast('Block passt nicht in den verfügbaren Zeitraum!', 'error', 3000);
+            } else {
+                alert('Block passt nicht in den verfügbaren Zeitraum!');
+            }
 
             // Bei Fehler: Block an alter Position wiederherstellen
             for (let j = 0; j < durationSlots; j++) {
@@ -339,7 +385,18 @@ function moveScheduledBlock(block, newDay, newTimeIndex) {
 
         const checkKey = `${newDay}-${checkTimeIndex}`;
         if (scheduledBlocks[checkKey]) {
-            alert('Dieser Zeitraum ist bereits belegt!');
+            // ✅ NEU: Collision-Feedback statt Alert
+            const blockingBlockId = scheduledBlocks[checkKey];
+            const blockingBlock = blockRegistry[blockingBlockId];
+            if (typeof showCollisionFeedback === 'function' && blockingBlock) {
+                showCollisionFeedback(blockingBlock, newDay, newTimeIndex);
+            } else {
+                if (typeof showToast === 'function') {
+                    showToast('Dieser Zeitraum ist bereits belegt!', 'error', 3000);
+                } else {
+                    alert('Dieser Zeitraum ist bereits belegt!');
+                }
+            }
 
             // Bei Fehler: Block an alter Position wiederherstellen
             for (let j = 0; j < durationSlots; j++) {
