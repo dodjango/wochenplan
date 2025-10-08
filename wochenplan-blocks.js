@@ -480,6 +480,20 @@ function handleResizeMove(e) {
         newDuration = maxDuration;
     }
 
+    // WICHTIG: Wenn resultierende Dauer kleiner als Minimum ist, Resize-Preview blockieren
+    // Dies verhindert, dass eine invalide Kollisions-Position visuell angezeigt wird
+    if (newDuration < timeSettings.timeStep) {
+        // Grid-Position auf ORIGINAL-Werte zurücksetzen
+        const GRID_STEP = 5;
+        const originalMinutesSinceStart = resizeBlock.timeIndex * timeSettings.timeStep;
+        const originalGridRowStart = Math.floor(originalMinutesSinceStart / GRID_STEP) + 1;
+        const originalDurationGridRows = Math.floor(resizeBlock.duration / GRID_STEP);
+        const originalGridRowEnd = originalGridRowStart + originalDurationGridRows;
+        element.style.gridRowStart = originalGridRowStart;
+        element.style.gridRowEnd = originalGridRowEnd;
+        return; // Keine visuelle Preview bei Kollision
+    }
+
     // Prüfen ob neuer Zeitindex gültig ist
     // WICHTIG: timeSlots enthält nur Stunden! Wir brauchen die Anzahl der timeStep-Slots
     const [startHour, startMinute] = timeSettings.startTime.split(':').map(Number);
@@ -545,15 +559,88 @@ function handleResizeEnd(e) {
 
 // Block-Daten nach Resize aktualisieren
 function updateBlockAfterResize(block, newTimeIndex, newDuration) {
-    // Alte Slots freigeben
+    const newDurationSlots = newDuration / timeSettings.timeStep;
     const oldDurationSlots = block.duration / timeSettings.timeStep;
+
+    // Schritt 1: Alte Slots temporär freigeben
+    const oldBlockedSlots = [];
     for (let i = 0; i < oldDurationSlots; i++) {
         const key = `${block.day}-${block.timeIndex + i}`;
+        oldBlockedSlots.push(key);
         delete scheduledBlocks[key];
     }
 
-    // Neue Slots belegen
-    const newDurationSlots = newDuration / timeSettings.timeStep;
+    // Schritt 2: Kollisionsprüfung für neue Position
+    // Berechne maximale Anzahl timeStep-Slots
+    const [startHour, startMinute] = timeSettings.startTime.split(':').map(Number);
+    const [endHour, endMinute] = timeSettings.endTime.split(':').map(Number);
+    const totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+    const totalTimeStepSlots = Math.floor(totalMinutes / timeSettings.timeStep);
+
+    for (let i = 0; i < newDurationSlots; i++) {
+        const checkTimeIndex = newTimeIndex + i;
+
+        // Prüfen ob außerhalb des Tagesbereichs
+        if (checkTimeIndex >= totalTimeStepSlots) {
+            // Wiederherstellen der alten Slots
+            oldBlockedSlots.forEach(key => {
+                scheduledBlocks[key] = block.id;
+            });
+
+            // Visuelle Position zurücksetzen
+            const element = document.querySelector(`[data-block-id="${block.id}"]`);
+            if (element) {
+                const GRID_STEP = 5;
+                const minutesSinceStart = block.timeIndex * timeSettings.timeStep;
+                const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
+                const durationGridRows = Math.floor(block.duration / GRID_STEP);
+                const gridRowEnd = gridRowStart + durationGridRows;
+                element.style.gridRowStart = gridRowStart;
+                element.style.gridRowEnd = gridRowEnd;
+            }
+
+            // Toast-Benachrichtigung
+            if (typeof showToast === 'function') {
+                showToast('Block passt nicht in den verfügbaren Zeitraum!', 'error', 3000);
+            }
+            return;
+        }
+
+        // Prüfen ob Slot bereits belegt ist (von einem anderen Block)
+        const checkKey = `${block.day}-${checkTimeIndex}`;
+        if (scheduledBlocks[checkKey]) {
+            // Kollision erkannt! Wiederherstellen und abbrechen
+            oldBlockedSlots.forEach(key => {
+                scheduledBlocks[key] = block.id;
+            });
+
+            // Visuelle Position zurücksetzen
+            const element = document.querySelector(`[data-block-id="${block.id}"]`);
+            if (element) {
+                const GRID_STEP = 5;
+                const minutesSinceStart = block.timeIndex * timeSettings.timeStep;
+                const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
+                const durationGridRows = Math.floor(block.duration / GRID_STEP);
+                const gridRowEnd = gridRowStart + durationGridRows;
+                element.style.gridRowStart = gridRowStart;
+                element.style.gridRowEnd = gridRowEnd;
+            }
+
+            // Collision-Feedback mit visueller Hervorhebung
+            const blockingBlockId = scheduledBlocks[checkKey];
+            const blockingBlock = blockRegistry[blockingBlockId];
+            if (typeof showCollisionFeedback === 'function' && blockingBlock) {
+                showCollisionFeedback(blockingBlock, block.day, newTimeIndex);
+            } else {
+                if (typeof showToast === 'function') {
+                    showToast('Dieser Zeitraum ist bereits belegt!', 'error', 3000);
+                }
+            }
+            return;
+        }
+    }
+
+    // Schritt 3: Keine Kollision - neue Slots belegen
     for (let i = 0; i < newDurationSlots; i++) {
         const key = `${block.day}-${newTimeIndex + i}`;
         scheduledBlocks[key] = block.id;
