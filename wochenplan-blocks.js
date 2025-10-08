@@ -459,25 +459,57 @@ function handleResizeMove(e) {
     let newTimeIndex = resizeBlock.timeIndex;
 
     if (resizeDirection === 'bottom') {
+        // Bottom-Resize: Start bleibt fix, Ende wächst
         newDuration = resizeBlock.duration + (deltaSlots * timeSettings.timeStep);
+        const maxDuration = getMaxDuration(resizeBlock.day, newTimeIndex, resizeBlock.id);
+        if (newDuration > maxDuration) {
+            newDuration = maxDuration;
+        }
     } else if (resizeDirection === 'top') {
-        const durationChange = -deltaSlots * timeSettings.timeStep;
-        newDuration = resizeBlock.duration + durationChange;
-        newTimeIndex = resizeBlock.timeIndex + deltaSlots;
+        // Top-Resize: Ende bleibt fix, Start bewegt sich nach oben
+        // WICHTIG: Konsistentes Verhalten - Block stoppt bei Kollision, kein "Rutschen"
+        const originalEndTimeIndex = resizeBlock.timeIndex + Math.floor(resizeBlock.duration / timeSettings.timeStep);
+        const attemptedNewTimeIndex = resizeBlock.timeIndex + deltaSlots;
+
+        // Finde den frühesten erlaubten Start-Zeitpunkt (nach allen Kollisionen)
+        let earliestValidStart = attemptedNewTimeIndex;
+
+        // Prüfe jeden Slot von attemptedNewTimeIndex bis zum aktuellen Start
+        for (let checkIndex = attemptedNewTimeIndex; checkIndex < resizeBlock.timeIndex; checkIndex++) {
+            const maxDurationFromHere = getMaxDuration(resizeBlock.day, checkIndex, resizeBlock.id);
+            const requiredDuration = (originalEndTimeIndex - checkIndex) * timeSettings.timeStep;
+
+            // Wenn von hier aus die Duration nicht bis zum Ende reicht: Kollision!
+            if (maxDurationFromHere < requiredDuration) {
+                // Finde wo der blockierende Block ENDET
+                const collisionStartsAt = checkIndex + Math.floor(maxDurationFromHere / timeSettings.timeStep);
+                const blockingKey = `${resizeBlock.day}-${collisionStartsAt}`;
+                const blockingBlockId = scheduledBlocks[blockingKey];
+
+                if (blockingBlockId) {
+                    const blockingBlock = blockRegistry[blockingBlockId];
+                    const blockingDurationSlots = Math.floor(blockingBlock.duration / timeSettings.timeStep);
+                    const blockingEndIndex = blockingBlock.timeIndex + blockingDurationSlots;
+                    earliestValidStart = blockingEndIndex;
+                } else {
+                    // Fallback: Direkt nach der erkannten Kollision
+                    earliestValidStart = collisionStartsAt;
+                }
+                break; // Erste Kollision gefunden, das ist unser Limit
+            }
+        }
+
+        newTimeIndex = earliestValidStart;
+        newDuration = (originalEndTimeIndex - newTimeIndex) * timeSettings.timeStep;
     }
 
     // Minimum: Ein Zeitslot
     if (newDuration < timeSettings.timeStep) {
         newDuration = timeSettings.timeStep;
         if (resizeDirection === 'top') {
-            newTimeIndex = resizeStartTimeIndex + Math.floor((resizeBlock.duration - timeSettings.timeStep) / timeSettings.timeStep);
+            const originalEndTimeIndex = resizeBlock.timeIndex + Math.floor(resizeBlock.duration / timeSettings.timeStep);
+            newTimeIndex = originalEndTimeIndex - 1; // Ein Slot vor dem Ende
         }
-    }
-
-    // Maximum: Bis zum Ende des Tages oder nächsten Block
-    const maxDuration = getMaxDuration(resizeBlock.day, newTimeIndex, resizeBlock.id);
-    if (newDuration > maxDuration) {
-        newDuration = maxDuration;
     }
 
     // WICHTIG: Wenn resultierende Dauer kleiner als Minimum ist, Resize-Preview blockieren
