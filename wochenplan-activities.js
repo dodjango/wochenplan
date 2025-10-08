@@ -145,14 +145,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const description = document.getElementById('activityDescription').value.trim();
 
             if (!name) {
-                alert('Bitte geben Sie einen Namen ein!');
+                showToast('Bitte geben Sie einen Namen ein!', 'error', 3000);
                 return;
             }
 
             // Prüfen ob Name bereits existiert (außer bei Bearbeitung)
             const existingIndex = activities.findIndex(a => a.name.toLowerCase() === name.toLowerCase());
             if (existingIndex !== -1 && existingIndex !== currentEditingActivity) {
-                alert('Eine Aktivität mit diesem Namen existiert bereits!');
+                showToast('Eine Aktivität mit diesem Namen existiert bereits!', 'error', 3000);
                 return;
             }
 

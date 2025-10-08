@@ -75,7 +75,7 @@ function autoFillWeekPlan(ageGroup) {
 
     if (relevantActivities.length === 0) {
         console.error('Keine relevanten Aktivitäten gefunden für Altersgruppe:', ageGroup);
-        alert(`Keine Aktivitäten für Altersgruppe ${ageGroup} definiert!`);
+        showToast(`Keine Aktivitäten für Altersgruppe ${ageGroup} definiert!`, 'error', 3000);
         return;
     }
 

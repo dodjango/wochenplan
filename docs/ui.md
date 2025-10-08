@@ -12,7 +12,7 @@ This application is built for **parents** - non-technical users who need a simpl
 
 ## Technical Stack Requirements
 
-**CRITICAL: Modern Vanilla Stack ONLY**
+⚠️ **CRITICAL: Modern Vanilla Stack ONLY**
 
 - ✅ **Pure JavaScript (ES6+)** - No frameworks, no build tools, no dependencies
 - ✅ **Pure CSS3** - No preprocessors, no CSS-in-JS, no external libraries
@@ -22,6 +22,7 @@ This application is built for **parents** - non-technical users who need a simpl
 - ❌ **NO jQuery, Bootstrap, or any external libraries**
 
 **Why vanilla only?**
+
 - Zero installation friction - download and run immediately
 - Works offline permanently - no CDN dependencies
 - Fast load times - no framework overhead
@@ -30,7 +31,7 @@ This application is built for **parents** - non-technical users who need a simpl
 
 ## Responsive Design Requirements
 
-**CRITICAL: Multi-Device Support**
+⚠️ **CRITICAL: Multi-Device Support**
 
 The application MUST work flawlessly on:
 
@@ -39,6 +40,7 @@ The application MUST work flawlessly on:
 3. **Mobile** (< 768px): Vertical layout, horizontal scrolling for activities
 
 **Responsive Breakpoints:**
+
 ```css
 /* Desktop (default) */
 @media (max-width: 1024px) { /* Tablet landscape */ }
@@ -47,6 +49,7 @@ The application MUST work flawlessly on:
 ```
 
 **Touch Optimization:**
+
 - Minimum touch target: 44x44px
 - Sufficient spacing between interactive elements
 - Touch-friendly drag & drop on mobile devices
@@ -55,7 +58,7 @@ The application MUST work flawlessly on:
 
 ### 1. Drag & Drop Interaction
 
-**CRITICAL: Intuitive Activity Placement**
+⚠️ **CRITICAL: Intuitive Activity Placement**
 
 Drag & drop is the PRIMARY interaction method for building weekly plans:
 
@@ -128,17 +131,19 @@ This section documents the **technical UI patterns** used throughout the applica
 
 ### 1. CSS Grid Native Layout
 
-**CRITICAL: Modern Grid-Based Positioning**
+⚠️ **CRITICAL: Modern Grid-Based Positioning**
 
 The calendar uses **native CSS Grid** for all block positioning - NO absolute positioning, NO manual top/left calculations.
 
 **Key Principles:**
+
 - **5-Minute Grid Rows**: Each grid row = 5 minutes (fixed 20px height)
 - **7-Day Columns**: 8 columns total (1 time column + 7 day columns)
 - **Grid-Based Blocks**: Blocks positioned via `gridRowStart`, `gridRowEnd`, `gridColumn`
 - **Dynamic Calculation**: timeIndex (in timeStep units) → grid rows (in 5-min units)
 
 **Example:**
+
 ```javascript
 // timeIndex = 12 (120 minutes from start = 08:00)
 // duration = 45 minutes
@@ -154,6 +159,7 @@ element.style.gridColumn = dayIndex + 2;
 ```
 
 **Why Grid?**
+
 - Automatic collision detection via browser
 - Precise alignment without manual calculation
 - Responsive scaling built-in
@@ -161,11 +167,12 @@ element.style.gridColumn = dayIndex + 2;
 
 ### 2. Toast Notification System
 
-**CRITICAL: User Feedback Without Alerts**
+⚠️ **CRITICAL: User Feedback Without Alerts**
 
 Replace ALL browser `alert()` calls with toast notifications for better UX.
 
 **Key Principles:**
+
 - **Position**: Fixed top-right (mobile: full-width top)
 - **Auto-Dismiss**: 3-5 seconds default
 - **Types**: Error (red), Success (green), Info (blue), Warning (yellow)
@@ -173,6 +180,7 @@ Replace ALL browser `alert()` calls with toast notifications for better UX.
 - **Animation**: Slide-in from right, slide-out on dismiss
 
 **Usage:**
+
 ```javascript
 showToast('Dieser Zeitraum ist bereits belegt!', 'error', 3000);
 showToast('Wochenplan gespeichert!', 'success', 2000);
@@ -181,6 +189,7 @@ showToast('Wochenplan gespeichert!', 'success', 2000);
 **Implementation Location:** `wochenplan-ui.js`
 
 **Why Toasts?**
+
 - Non-blocking user experience
 - Professional appearance
 - Better for accessibility (screen readers)
@@ -188,11 +197,12 @@ showToast('Wochenplan gespeichert!', 'success', 2000);
 
 ### 3. Custom Cursor-Following Tooltip
 
-**CRITICAL: Modern Tooltip System**
+⚠️ **CRITICAL: Modern Tooltip System**
 
 Native browser tooltips (`title` attribute) are REPLACED by custom tooltips.
 
 **Key Principles:**
+
 - **Black Background**: `rgba(0, 0, 0, 0.92)` with white text
 - **Cursor-Following**: Updates position on `mousemove` in real-time
 - **Instant Display**: No delay on `mouseenter`
@@ -201,6 +211,7 @@ Native browser tooltips (`title` attribute) are REPLACED by custom tooltips.
 - **Touch Support**: Tap-to-show with 3-second auto-hide
 
 **Content Structure:**
+
 ```
 ┌─────────────────────────────┐
 │ Schule (bold, border-bottom)│
@@ -212,6 +223,7 @@ Native browser tooltips (`title` attribute) are REPLACED by custom tooltips.
 **Implementation Location:** `wochenplan-blocks.js` (lines 5-210)
 
 **Why Custom Tooltips?**
+
 - Richer content (multi-line, styled)
 - Better UX (cursor-following)
 - Consistent across browsers
@@ -219,11 +231,12 @@ Native browser tooltips (`title` attribute) are REPLACED by custom tooltips.
 
 ### 4. Resize Handle System
 
-**CRITICAL: Touch-Optimized Resize Handles**
+⚠️ **CRITICAL: Touch-Optimized Resize Handles**
 
 Blocks can be resized via top/bottom handles with touch optimization.
 
 **Key Principles:**
+
 - **Minimal Visual**: 2px line, expands to 4-6px on hover
 - **Large Touch Target**: Invisible 20px ::before pseudo-element for easier grabbing
 - **Hover-Only Display**: Handles only visible on block hover (desktop)
@@ -232,6 +245,7 @@ Blocks can be resized via top/bottom handles with touch optimization.
 - **Grid-Snapped**: Resizing snaps to 5-minute grid rows
 
 **CSS Pattern:**
+
 ```css
 .resize-handle {
     height: 2px; /* Visual handle */
@@ -248,23 +262,26 @@ Blocks can be resized via top/bottom handles with touch optimization.
 ```
 
 **Why This Pattern?**
+
 - WCAG 2.1 AAA touch targets (44x44px)
 - Unobtrusive when not needed
 - Works on both mouse and touch
 
 ### 5. Collision Feedback System
 
-**CRITICAL: Visual Error Communication**
+⚠️ **CRITICAL: Visual Error Communication**
 
 When drag/drop fails due to collision, provide VISUAL feedback instead of alerts.
 
 **Key Principles:**
+
 - **Pulse Animation**: Blocking block pulses red (4 iterations)
 - **Toast Message**: "Dieser Zeitraum ist bereits belegt!" (error toast)
 - **Z-Index Elevation**: Blocking block temporarily elevated (z-index: 15)
 - **No Page Interruption**: Non-modal feedback
 
 **Implementation:**
+
 ```javascript
 function showCollisionFeedback(blockingBlock, targetDay, targetTime) {
     const element = document.querySelector(`[data-block-id="${blockingBlock.id}"]`);
@@ -275,6 +292,7 @@ function showCollisionFeedback(blockingBlock, targetDay, targetTime) {
 ```
 
 **CSS Animation:**
+
 ```css
 @keyframes collision-pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
@@ -284,11 +302,12 @@ function showCollisionFeedback(blockingBlock, targetDay, targetTime) {
 
 ### 6. Z-Index Hierarchy
 
-**CRITICAL: Layering System**
+⚠️ **CRITICAL: Layering System**
 
 Strict z-index hierarchy prevents visual conflicts.
 
 **Layers (bottom to top):**
+
 ```
 1. Base Content         z-index: 1-4
 5. Sidebar Sticky       z-index: 5
@@ -306,16 +325,18 @@ Strict z-index hierarchy prevents visual conflicts.
 
 ### 7. Responsive Typography
 
-**CRITICAL: Dynamic Text Sizing**
+⚠️ **CRITICAL: Dynamic Text Sizing**
 
 Block text adapts to available height to prevent overflow.
 
 **Key Principles:**
+
 - **Height-Based Categories**: `data-height` attribute ("small", "medium", "large")
 - **Automatic Calculation**: Set during block rendering based on duration
 - **CSS-Driven Sizing**: Font-size adjusted via attribute selectors
 
 **Implementation:**
+
 ```javascript
 const blockHeightPx = (block.duration / 5) * 20;
 let heightCategory = 'large';
@@ -332,11 +353,12 @@ element.setAttribute('data-height', heightCategory);
 
 ### 8. Keyboard Navigation
 
-**CRITICAL: Accessibility & Power Users**
+⚠️ **CRITICAL: Accessibility & Power Users**
 
 Full keyboard support for block manipulation.
 
 **Key Bindings:**
+
 - **Tab**: Focus next block
 - **Shift+Tab**: Focus previous block
 - **Arrow Keys**: Move focused block
@@ -348,6 +370,7 @@ Full keyboard support for block manipulation.
 **Implementation Location:** `wochenplan-keyboard.js`
 
 **Visual Feedback:**
+
 ```css
 .scheduled-block.keyboard-focused {
     outline: 3px solid #FFD700; /* Gold outline */
@@ -357,17 +380,19 @@ Full keyboard support for block manipulation.
 
 ### 9. Sticky Navigation Pattern
 
-**CRITICAL: Context Preservation**
+⚠️ **CRITICAL: Context Preservation**
 
 Important controls remain visible during scroll.
 
 **Sticky Elements:**
+
 1. **App Header** (top: 0, z-index: 20)
 2. **Main Controls** (top: 60px, z-index: 15)
 3. **Calendar Header** (top: 130px, z-index: 12)
 4. **Sidebar Header** (top: 0, z-index: 5, within sidebar)
 
 **CSS Pattern:**
+
 ```css
 .app-header {
     position: sticky;
@@ -378,17 +403,19 @@ Important controls remain visible during scroll.
 ```
 
 **Why Background?**
+
 - Sticky elements MUST have opaque backgrounds
 - Prevents content showing through when scrolling
 - Maintains visual hierarchy
 
 ### 10. Touch Event Handling
 
-**CRITICAL: Mobile-First Interactions**
+⚠️ **CRITICAL: Mobile-First Interactions**
 
 All interactive elements support touch events.
 
 **Key Principles:**
+
 - **Touch Targets**: Minimum 44x44px (WCAG AAA)
 - **Passive Listeners**: `{ passive: true }` for scroll performance
 - **Touch Feedback**: Visual state change on `touchstart`
@@ -398,6 +425,7 @@ All interactive elements support touch events.
 **Implementation Location:** `wochenplan-touch.js`
 
 **Pattern:**
+
 ```javascript
 element.addEventListener('touchstart', (e) => {
     // Touch handling
@@ -406,17 +434,19 @@ element.addEventListener('touchstart', (e) => {
 
 ### 11. ARIA Accessibility
 
-**CRITICAL: Screen Reader Support**
+⚠️ **CRITICAL: Screen Reader Support**
 
 Semantic HTML + ARIA attributes for accessibility.
 
 **Key Patterns:**
+
 - **Roles**: `role="application"`, `role="grid"`, `role="button"`
 - **Labels**: `aria-label` for icon-only buttons
 - **Live Regions**: `aria-live="polite"` for dynamic updates
 - **Focus Management**: Proper tab order, focus indicators
 
 **Example:**
+
 ```javascript
 element.setAttribute('role', 'button');
 element.setAttribute('aria-label',
@@ -427,11 +457,12 @@ element.setAttribute('tabindex', '0');
 
 ### 12. Animation Principles
 
-**CRITICAL: Performance & Smoothness**
+⚠️ **CRITICAL: Performance & Smoothness**
 
 All animations must be 60fps and non-blocking.
 
 **Rules:**
+
 - **Use CSS Transitions**: Prefer CSS over JS animations
 - **GPU Acceleration**: Animate `transform` and `opacity` only
 - **RequestAnimationFrame**: For JS-driven animations
@@ -442,12 +473,14 @@ All animations must be 60fps and non-blocking.
 - **Easing**: `ease-in-out` for most transitions
 
 **Anti-Pattern (SLOW):**
+
 ```javascript
 // ❌ Animating top/left causes reflow
 element.style.top = '100px';
 ```
 
 **Correct Pattern (FAST):**
+
 ```javascript
 // ✅ Animating transform uses GPU
 element.style.transform = 'translateY(100px)';
@@ -455,11 +488,12 @@ element.style.transform = 'translateY(100px)';
 
 ### 13. State Management Pattern
 
-**CRITICAL: Consistent State Handling**
+⚠️ **CRITICAL: Consistent State Handling**
 
 UI state is managed through well-defined global objects.
 
 **Key State Objects:**
+
 - `scheduledBlocks` - Map of occupied time slots
 - `blockRegistry` - Map of block objects by ID
 - `activities` - Array of available activity types
@@ -467,6 +501,7 @@ UI state is managed through well-defined global objects.
 - `hasUnsavedChanges` - Dirty flag for auto-save
 
 **Pattern:**
+
 ```javascript
 // Update state FIRST
 blockRegistry[blockId] = block;
@@ -481,17 +516,19 @@ hasUnsavedChanges = true;
 ```
 
 **Why This Order?**
+
 - State is single source of truth
 - DOM can always be rebuilt from state
 - Persistence happens after state is consistent
 
 ### 14. Error Prevention UI Patterns
 
-**CRITICAL: Fail-Safe Interactions**
+⚠️ **CRITICAL: Fail-Safe Interactions**
 
 Prevent errors before they happen.
 
 **Patterns:**
+
 - **Collision Detection**: Check BEFORE allowing drop
 - **Boundary Checking**: Validate timeIndex before rendering
 - **Input Validation**: Check duration, time ranges
@@ -499,6 +536,7 @@ Prevent errors before they happen.
 - **Graceful Degradation**: Fallback to alerts if toast system fails
 
 **Example:**
+
 ```javascript
 // ✅ Check BEFORE creating block
 if (scheduledBlocks[checkKey]) {

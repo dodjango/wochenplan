@@ -157,7 +157,7 @@ function loadSavedPlan(planName) {
     const plan = savedPlans[planName];
 
     if (!plan) {
-        alert(`Plan "${planName}" nicht gefunden!`);
+        showToast(`Plan "${planName}" nicht gefunden!`, 'error', 3000);
         return;
     }
 
@@ -363,7 +363,7 @@ function exportPlan() {
     link.click();
     URL.revokeObjectURL(url);
 
-    alert(`Plan "${planName}" als JSON-Datei exportiert!`);
+    showToast(`Plan "${planName}" als JSON-Datei exportiert!`, 'success', 3000);
 }
 
 function importPlan() {
@@ -380,7 +380,7 @@ function importPlan() {
                 const weekPlan = JSON.parse(event.target.result);
 
                 if (!weekPlan.name || !weekPlan.activities || !weekPlan.schedule) {
-                    alert('Ungültiges Wochenplan-Format!');
+                    showToast('Ungültiges Wochenplan-Format!', 'error', 3000);
                     return;
                 }
 
@@ -398,9 +398,9 @@ function importPlan() {
 
                 navigateToApp();
 
-                alert(`Plan "${weekPlan.name}" wurde importiert!`);
+                showToast(`Plan "${weekPlan.name}" wurde importiert!`, 'success', 3000);
             } catch (error) {
-                alert('Fehler beim Laden der Datei: ' + error.message);
+                showToast('Fehler beim Laden der Datei: ' + error.message, 'error', 4000);
             }
         };
         reader.readAsText(file);

@@ -173,7 +173,7 @@ function applySettings() {
 
     // Validierung
     if (!startTime || !endTime) {
-        alert('Bitte geben Sie gültige Start- und Endzeiten ein!');
+        showToast('Bitte geben Sie gültige Start- und Endzeiten ein!', 'error', 3000);
         return;
     }
 
@@ -183,7 +183,7 @@ function applySettings() {
     const endTotalMinutes = endHour * 60 + endMinute;
 
     if (startTotalMinutes >= endTotalMinutes) {
-        alert('Die Startzeit muss vor der Endzeit liegen!');
+        showToast('Die Startzeit muss vor der Endzeit liegen!', 'error', 3000);
         return;
     }
 
@@ -205,7 +205,7 @@ function applySettings() {
         createCalendarGrid();
 
         closeSettingsModal();
-        alert('Zeitplan-Einstellungen wurden angewendet!');
+        showToast('Zeitplan-Einstellungen wurden angewendet!', 'success', 3000);
     }
 }
 

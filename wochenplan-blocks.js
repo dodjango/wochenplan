@@ -566,6 +566,16 @@ function updateBlockAfterResize(block, newTimeIndex, newDuration) {
     // Block in Registry aktualisieren
     blockRegistry[block.id] = block;
 
+    // ✅ Data-height Attribut aktualisieren für responsive Typography
+    const element = document.querySelector(`[data-block-id="${block.id}"]`);
+    if (element) {
+        const blockHeightPx = (newDuration / 5) * 20; // 20px pro 5-Min-Zeile
+        let heightCategory = 'large';
+        if (blockHeightPx < 40) heightCategory = 'small';
+        else if (blockHeightPx < 80) heightCategory = 'medium';
+        element.setAttribute('data-height', heightCategory);
+    }
+
     console.log(`Block ${block.activity.name} resized: ${newDuration}min ab ${timeSlots[newTimeIndex]}`);
     saveWeek(); // Auto-Save nach Resize
     hasUnsavedChanges = true;
@@ -680,6 +690,13 @@ function moveScheduledBlock(block, newDay, newTimeIndex) {
         element.style.gridRowStart = gridRowStart;
         element.style.gridRowEnd = gridRowEnd;
         element.style.gridColumn = gridColumn;
+
+        // ✅ Data-height Attribut aktualisieren für responsive Typography
+        const blockHeightPx = (block.duration / 5) * 20; // 20px pro 5-Min-Zeile
+        let heightCategory = 'large';
+        if (blockHeightPx < 40) heightCategory = 'small';
+        else if (blockHeightPx < 80) heightCategory = 'medium';
+        element.setAttribute('data-height', heightCategory);
     }
 
     saveWeek();

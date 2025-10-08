@@ -204,14 +204,14 @@ function executeSavePlan() {
     const planName = document.getElementById('savePlanName').value.trim();
 
     if (!planName) {
-        alert('Bitte geben Sie einen Plan-Namen ein!');
+        showToast('Bitte geben Sie einen Plan-Namen ein!', 'error', 3000);
         return;
     }
 
     savePlanToStorage(planName);
     closeSavePlanModal();
 
-    alert(`Plan "${planName}" wurde gespeichert!`);
+    showToast(`Plan "${planName}" wurde gespeichert!`, 'success', 3000);
 
     // Wenn Navigation zum Welcome Screen ausstehend ist, jetzt durchführen
     if (pendingNavigationToWelcome) {
