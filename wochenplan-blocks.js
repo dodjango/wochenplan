@@ -2,6 +2,212 @@
 // BLOCK-VERWALTUNG (Drag & Drop, Resize)
 // ========================================
 
+// ========================================
+// TOOLTIP-SYSTEM
+// ========================================
+
+// Singleton Tooltip-Element
+let tooltipElement = null;
+let currentTooltipBlock = null;
+let tooltipMouseMoveHandler = null;
+let tooltipHideTimeout = null;
+const TOOLTIP_OFFSET_X = 15;
+const TOOLTIP_OFFSET_Y = 15;
+const TOOLTIP_HIDE_DELAY = 200; // ms - Verzögerung vor dem Ausblenden auf Touch-Geräten
+
+// Tooltip-Element erstellen (lazy initialization)
+function getTooltipElement() {
+    if (!tooltipElement) {
+        tooltipElement = document.createElement('div');
+        tooltipElement.className = 'block-tooltip';
+        tooltipElement.setAttribute('role', 'tooltip');
+        tooltipElement.setAttribute('aria-live', 'polite');
+        document.body.appendChild(tooltipElement);
+    }
+    return tooltipElement;
+}
+
+// Tooltip-Inhalt generieren
+function generateTooltipContent(block) {
+    const tooltip = getTooltipElement();
+
+    // Zeitberechnung: timeIndex ist in timeStep-Einheiten ab Tagesbeginn (startTime)
+    const startTimeIndex = block.timeIndex;
+    const endTimeIndex = block.timeIndex + Math.floor(block.duration / timeSettings.timeStep);
+
+    // Parse startTime aus Einstellungen (z.B. "06:00")
+    const [dayStartHour, dayStartMinute] = timeSettings.startTime.split(':').map(Number);
+    const dayStartMinutes = dayStartHour * 60 + dayStartMinute;
+
+    // Berechne absolute Minuten ab Mitternacht
+    const startMinutesFromMidnight = dayStartMinutes + (startTimeIndex * timeSettings.timeStep);
+    const endMinutesFromMidnight = dayStartMinutes + (endTimeIndex * timeSettings.timeStep);
+
+    // Konvertiere zu Stunden und Minuten
+    const startHour = Math.floor(startMinutesFromMidnight / 60);
+    const startMin = startMinutesFromMidnight % 60;
+    const endHour = Math.floor(endMinutesFromMidnight / 60);
+    const endMin = endMinutesFromMidnight % 60;
+
+    const startTime = `${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+    const endTime = `${String(endHour).padStart(2, '0')}:${String(endMin).padStart(2, '0')}`;
+
+    // HTML-Content erstellen
+    let content = `<div class="block-tooltip-name">${escapeHtml(block.activity.name)}</div>`;
+    content += `<div class="block-tooltip-time">${startTime} - ${endTime} (${block.duration} Min)</div>`;
+
+    if (block.activity.description && block.activity.description.trim()) {
+        content += `<div class="block-tooltip-description">${escapeHtml(block.activity.description)}</div>`;
+    }
+
+    tooltip.innerHTML = content;
+}
+
+// HTML-Escape-Funktion für XSS-Schutz
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Tooltip-Position berechnen (mit Viewport-Kollisionsvermeidung)
+function positionTooltip(mouseX, mouseY) {
+    const tooltip = getTooltipElement();
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let x = mouseX + TOOLTIP_OFFSET_X;
+    let y = mouseY + TOOLTIP_OFFSET_Y;
+
+    // Rechte Viewport-Grenze prüfen
+    if (x + tooltipRect.width > viewportWidth - 10) {
+        x = mouseX - tooltipRect.width - TOOLTIP_OFFSET_X;
+    }
+
+    // Untere Viewport-Grenze prüfen
+    if (y + tooltipRect.height > viewportHeight - 10) {
+        y = mouseY - tooltipRect.height - TOOLTIP_OFFSET_Y;
+    }
+
+    // Linke Viewport-Grenze prüfen
+    if (x < 10) {
+        x = 10;
+    }
+
+    // Obere Viewport-Grenze prüfen
+    if (y < 10) {
+        y = 10;
+    }
+
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+}
+
+// Tooltip anzeigen
+function showTooltip(block, initialX, initialY) {
+    // Bestehenden Hide-Timeout abbrechen
+    if (tooltipHideTimeout) {
+        clearTimeout(tooltipHideTimeout);
+        tooltipHideTimeout = null;
+    }
+
+    currentTooltipBlock = block;
+    const tooltip = getTooltipElement();
+
+    // Content generieren
+    generateTooltipContent(block);
+
+    // Position setzen (muss nach Content-Generierung erfolgen für korrekte Größe)
+    positionTooltip(initialX, initialY);
+
+    // Sichtbar machen
+    requestAnimationFrame(() => {
+        tooltip.classList.add('visible');
+    });
+}
+
+// Tooltip ausblenden
+function hideTooltip() {
+    const tooltip = getTooltipElement();
+    tooltip.classList.remove('visible');
+    currentTooltipBlock = null;
+
+    // MouseMove-Handler entfernen
+    if (tooltipMouseMoveHandler) {
+        document.removeEventListener('mousemove', tooltipMouseMoveHandler);
+        tooltipMouseMoveHandler = null;
+    }
+}
+
+// Tooltip auf Mouse-Move aktualisieren
+function updateTooltipPosition(e) {
+    if (currentTooltipBlock) {
+        positionTooltip(e.clientX, e.clientY);
+    }
+}
+
+// Tooltip an Block anbinden
+function attachTooltipToBlock(element, block) {
+    // Desktop: Hover-basiert mit Cursor-Following
+    element.addEventListener('mouseenter', (e) => {
+        // Nicht anzeigen wenn gerade resized oder gedragged wird
+        if (isResizing || element.classList.contains('dragging')) {
+            return;
+        }
+
+        showTooltip(block, e.clientX, e.clientY);
+
+        // MouseMove-Handler für Cursor-Following
+        tooltipMouseMoveHandler = updateTooltipPosition;
+        document.addEventListener('mousemove', tooltipMouseMoveHandler);
+    });
+
+    element.addEventListener('mouseleave', () => {
+        hideTooltip();
+    });
+
+    // Touch-Geräte: Tap-to-Show mit Auto-Hide
+    if ('ontouchstart' in window) {
+        let touchTimeout = null;
+
+        element.addEventListener('touchstart', (e) => {
+            // Wenn bereits ein anderer Tooltip sichtbar ist, verstecke ihn
+            if (currentTooltipBlock && currentTooltipBlock.id !== block.id) {
+                hideTooltip();
+            }
+
+            // Touch-Position ermitteln
+            const touch = e.touches[0];
+            const touchX = touch.clientX;
+            const touchY = touch.clientY;
+
+            // Tooltip anzeigen
+            showTooltip(block, touchX, touchY);
+
+            // Auto-Hide nach 3 Sekunden
+            if (touchTimeout) clearTimeout(touchTimeout);
+            touchTimeout = setTimeout(() => {
+                hideTooltip();
+            }, 3000);
+        }, { passive: true });
+
+        // Bei Touch-Ende: verzögertes Ausblenden
+        element.addEventListener('touchend', () => {
+            tooltipHideTimeout = setTimeout(() => {
+                hideTooltip();
+            }, TOOLTIP_HIDE_DELAY);
+        }, { passive: true });
+    }
+}
+
+// Cleanup-Funktion (für Resize/Drag)
+function cleanupTooltip() {
+    if (currentTooltipBlock) {
+        hideTooltip();
+    }
+}
+
 // Geplanten Block hinzufügen
 function addScheduledBlock(day, timeIndex, activity, duration) {
     const blockId = Date.now().toString();
@@ -12,13 +218,29 @@ function addScheduledBlock(day, timeIndex, activity, duration) {
         const checkTimeIndex = timeIndex + i;
         // Prüfen ob der Zeitindex im gültigen Bereich liegt
         if (checkTimeIndex >= timeSlots.length) {
-            alert('Block passt nicht in den verfügbaren Zeitraum!');
+            // ✅ NEU: Toast statt Alert
+            if (typeof showToast === 'function') {
+                showToast('Block passt nicht in den verfügbaren Zeitraum!', 'error', 3000);
+            } else {
+                alert('Block passt nicht in den verfügbaren Zeitraum!');
+            }
             return;
         }
 
         const checkKey = `${day}-${checkTimeIndex}`;
         if (scheduledBlocks[checkKey]) {
-            alert('Dieser Zeitraum ist bereits belegt!');
+            // ✅ NEU: Collision-Feedback statt Alert
+            const blockingBlockId = scheduledBlocks[checkKey];
+            const blockingBlock = blockRegistry[blockingBlockId];
+            if (typeof showCollisionFeedback === 'function' && blockingBlock) {
+                showCollisionFeedback(blockingBlock, day, timeIndex);
+            } else {
+                if (typeof showToast === 'function') {
+                    showToast('Dieser Zeitraum ist bereits belegt!', 'error', 3000);
+                } else {
+                    alert('Dieser Zeitraum ist bereits belegt!');
+                }
+            }
             return;
         }
     }
@@ -46,10 +268,24 @@ function addScheduledBlock(day, timeIndex, activity, duration) {
     hasUnsavedChanges = true;
 }
 
+// Helper: Zeitslots für einen Block blockieren (für Storage/Autofill)
+function occupyTimeSlots(day, startMinutes, durationMinutes, blockId) {
+    // startMinutes in timeIndex umrechnen
+    const startTimeIndex = Math.floor(startMinutes / timeSettings.timeStep);
+    const durationSlots = Math.ceil(durationMinutes / timeSettings.timeStep);
+
+    // Alle Slots blockieren
+    for (let i = 0; i < durationSlots; i++) {
+        const key = `${day}-${startTimeIndex + i}`;
+        scheduledBlocks[key] = blockId;
+    }
+}
+
 // Geplanten Block darstellen
 function renderScheduledBlock(block) {
-    const cell = document.querySelector(`[data-day="${block.day}"][data-time-index="${block.timeIndex}"]`);
-    if (!cell) return;
+    // ✅ Holt Grid-Container (nicht einzelne Zelle!)
+    const grid = document.getElementById('calendarGrid');
+    if (!grid) return;
 
     const element = document.createElement('div');
     element.className = 'scheduled-block';
@@ -58,14 +294,38 @@ function renderScheduledBlock(block) {
     element.textContent = block.activity.name;
     element.dataset.blockId = block.id;
     element.draggable = true;
-    element.title = block.activity.description || block.activity.name;
 
-    const durationSlots = block.duration / timeSettings.timeStep;
-    const slotHeight = calculateSlotHeight();
-    element.style.height = `${durationSlots * slotHeight - 4}px`;
-    element.style.top = '2px';
+    // ✅ Entferne native Browser-Tooltip (wird durch unseren ersetzt)
+    // element.title wird NICHT gesetzt - wir verwenden stattdessen unseren Custom-Tooltip
 
-    // Löschen-Button
+    // ✅ Grid-Position berechnen (5-Minuten-Grid!)
+    const GRID_STEP = 5; // Grid hat 5-Minuten-Zeilen
+
+    // Start: timeIndex → Minuten → Grid Row
+    const minutesSinceStart = block.timeIndex * timeSettings.timeStep;
+    const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
+
+    // Dauer: Minuten → Anzahl Grid-Zeilen
+    const durationGridRows = Math.floor(block.duration / GRID_STEP);
+    const gridRowEnd = gridRowStart + durationGridRows;
+
+    // Spalte: +2 weil Spalte 1 ist die Zeitspalte
+    const dayIndex = days.indexOf(block.day);
+    const gridColumn = dayIndex + 2;
+
+    // ✅ Grid-Position via CSS setzen
+    element.style.gridRowStart = gridRowStart;
+    element.style.gridRowEnd = gridRowEnd;
+    element.style.gridColumn = gridColumn;
+
+    // ✅ Data-Attribut für responsive Typography
+    const blockHeightPx = (block.duration / 5) * 20; // 20px pro 5-Min-Zeile
+    let heightCategory = 'large';
+    if (blockHeightPx < 40) heightCategory = 'small';
+    else if (blockHeightPx < 80) heightCategory = 'medium';
+    element.setAttribute('data-height', heightCategory);
+
+    // Löschen-Button (wie bisher)
     const removeBtn = document.createElement('button');
     removeBtn.className = 'remove-btn';
     removeBtn.textContent = '×';
@@ -75,7 +335,7 @@ function renderScheduledBlock(block) {
     };
     element.appendChild(removeBtn);
 
-    // Resize-Handles hinzufügen
+    // Resize-Handles (wie bisher)
     const resizeHandleTop = document.createElement('div');
     resizeHandleTop.className = 'resize-handle resize-handle-top';
     element.appendChild(resizeHandleTop);
@@ -84,42 +344,41 @@ function renderScheduledBlock(block) {
     resizeHandleBottom.className = 'resize-handle resize-handle-bottom';
     element.appendChild(resizeHandleBottom);
 
-    // Resize Events
     setupResizeEvents(element, block, resizeHandleTop, 'top');
     setupResizeEvents(element, block, resizeHandleBottom, 'bottom');
 
-    // Drag Events für Verschieben
+    // Drag Events (wie bisher)
     element.addEventListener('dragstart', (e) => {
         if (isResizing) {
             e.preventDefault();
             return;
         }
+
+        // Tooltip verstecken während Drag
+        cleanupTooltip();
+
         currentDraggedBlock = block;
         draggedActivity = null;
         e.dataTransfer.effectAllowed = 'move';
 
-        // Canvas für vollständiges Drag-Image erstellen
+        // Canvas für Drag-Image (wie bisher)
         const canvas = document.createElement('canvas');
         const rect = element.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
         const ctx = canvas.getContext('2d');
 
-        // Block-Hintergrund zeichnen
         ctx.fillStyle = block.activity.color;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Text zeichnen
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 11px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(block.activity.name, canvas.width / 2, canvas.height / 2);
 
-        // Canvas als Drag-Image setzen
         e.dataTransfer.setDragImage(canvas, canvas.width / 2, canvas.height / 2);
 
-        // Original-Block wird unsichtbar, nur Rahmen bleibt
         setTimeout(() => element.classList.add('dragging'), 0);
     });
 
@@ -131,7 +390,24 @@ function renderScheduledBlock(block) {
         });
     });
 
-    cell.appendChild(element);
+    // ✅ Keyboard-Fokus + ARIA
+    if (typeof addKeyboardFocusToBlock === 'function') {
+        addKeyboardFocusToBlock(element, block.id);
+    }
+    if (typeof updateAriaForBlock === 'function') {
+        updateAriaForBlock(element, block);
+    }
+
+    // ✅ Touch-Events für Mobile/Tablet
+    if (typeof addTouchEventsToScheduledBlock === 'function') {
+        addTouchEventsToScheduledBlock(element, block);
+    }
+
+    // ✅ Custom Tooltip anbinden
+    attachTooltipToBlock(element, block);
+
+    // ✅ Direkt ins Grid einfügen (NICHT in cell)
+    grid.appendChild(element);
 }
 
 // ========================================
@@ -143,6 +419,9 @@ function setupResizeEvents(element, block, handle, direction) {
     handle.addEventListener('mousedown', (e) => {
         e.preventDefault();
         e.stopPropagation();
+
+        // Tooltip verstecken während Resize
+        cleanupTooltip();
 
         // Resize-Modus starten
         isResizing = true;
@@ -168,58 +447,109 @@ function handleResizeMove(e) {
     const element = document.querySelector(`[data-block-id="${resizeBlock.id}"]`);
     if (!element) return;
 
-    const slotHeight = calculateSlotHeight();
+    // ✅ WICHTIG: In Grid-Architektur ist die Slot-Höhe konstant
+    const GRID_ROW_HEIGHT = 20; // px pro 5-Min-Zeile (muss mit updateCalendarCSS() übereinstimmen!)
+    const timeStepRows = timeSettings.timeStep / 5; // z.B. 10/5 = 2 Zeilen pro timeStep
+    const timeStepHeight = GRID_ROW_HEIGHT * timeStepRows; // z.B. 20 * 2 = 40px pro timeStep
+
     const deltaY = e.clientY - resizeStartY;
-    const deltaSlots = Math.round(deltaY / slotHeight);
+    const deltaSlots = Math.round(deltaY / timeStepHeight);
 
     let newDuration = resizeBlock.duration;
     let newTimeIndex = resizeBlock.timeIndex;
 
     if (resizeDirection === 'bottom') {
-        // Unten vergrößern/verkleinern
+        // Bottom-Resize: Start bleibt fix, Ende wächst
         newDuration = resizeBlock.duration + (deltaSlots * timeSettings.timeStep);
+        const maxDuration = getMaxDuration(resizeBlock.day, newTimeIndex, resizeBlock.id);
+        if (newDuration > maxDuration) {
+            newDuration = maxDuration;
+        }
     } else if (resizeDirection === 'top') {
-        // Oben vergrößern/verkleinern
-        const durationChange = -deltaSlots * timeSettings.timeStep;
-        newDuration = resizeBlock.duration + durationChange;
-        newTimeIndex = resizeBlock.timeIndex + deltaSlots;
+        // Top-Resize: Ende bleibt fix, Start bewegt sich nach oben
+        // WICHTIG: Konsistentes Verhalten - Block stoppt bei Kollision, kein "Rutschen"
+        const originalEndTimeIndex = resizeBlock.timeIndex + Math.floor(resizeBlock.duration / timeSettings.timeStep);
+        const attemptedNewTimeIndex = resizeBlock.timeIndex + deltaSlots;
+
+        // Finde den frühesten erlaubten Start-Zeitpunkt (nach allen Kollisionen)
+        let earliestValidStart = attemptedNewTimeIndex;
+
+        // Prüfe jeden Slot von attemptedNewTimeIndex bis zum aktuellen Start
+        for (let checkIndex = attemptedNewTimeIndex; checkIndex < resizeBlock.timeIndex; checkIndex++) {
+            const maxDurationFromHere = getMaxDuration(resizeBlock.day, checkIndex, resizeBlock.id);
+            const requiredDuration = (originalEndTimeIndex - checkIndex) * timeSettings.timeStep;
+
+            // Wenn von hier aus die Duration nicht bis zum Ende reicht: Kollision!
+            if (maxDurationFromHere < requiredDuration) {
+                // Finde wo der blockierende Block ENDET
+                const collisionStartsAt = checkIndex + Math.floor(maxDurationFromHere / timeSettings.timeStep);
+                const blockingKey = `${resizeBlock.day}-${collisionStartsAt}`;
+                const blockingBlockId = scheduledBlocks[blockingKey];
+
+                if (blockingBlockId) {
+                    const blockingBlock = blockRegistry[blockingBlockId];
+                    const blockingDurationSlots = Math.floor(blockingBlock.duration / timeSettings.timeStep);
+                    const blockingEndIndex = blockingBlock.timeIndex + blockingDurationSlots;
+                    earliestValidStart = blockingEndIndex;
+                } else {
+                    // Fallback: Direkt nach der erkannten Kollision
+                    earliestValidStart = collisionStartsAt;
+                }
+                break; // Erste Kollision gefunden, das ist unser Limit
+            }
+        }
+
+        newTimeIndex = earliestValidStart;
+        newDuration = (originalEndTimeIndex - newTimeIndex) * timeSettings.timeStep;
     }
 
     // Minimum: Ein Zeitslot
     if (newDuration < timeSettings.timeStep) {
         newDuration = timeSettings.timeStep;
         if (resizeDirection === 'top') {
-            newTimeIndex = resizeStartTimeIndex + Math.floor((resizeBlock.duration - timeSettings.timeStep) / timeSettings.timeStep);
+            const originalEndTimeIndex = resizeBlock.timeIndex + Math.floor(resizeBlock.duration / timeSettings.timeStep);
+            newTimeIndex = originalEndTimeIndex - 1; // Ein Slot vor dem Ende
         }
     }
 
-    // Maximum: Bis zum Ende des Tages oder nächsten Block
-    const maxDuration = getMaxDuration(resizeBlock.day, newTimeIndex, resizeBlock.id);
-    if (newDuration > maxDuration) {
-        newDuration = maxDuration;
+    // WICHTIG: Wenn resultierende Dauer kleiner als Minimum ist, Resize-Preview blockieren
+    // Dies verhindert, dass eine invalide Kollisions-Position visuell angezeigt wird
+    if (newDuration < timeSettings.timeStep) {
+        // Grid-Position auf ORIGINAL-Werte zurücksetzen
+        const GRID_STEP = 5;
+        const originalMinutesSinceStart = resizeBlock.timeIndex * timeSettings.timeStep;
+        const originalGridRowStart = Math.floor(originalMinutesSinceStart / GRID_STEP) + 1;
+        const originalDurationGridRows = Math.floor(resizeBlock.duration / GRID_STEP);
+        const originalGridRowEnd = originalGridRowStart + originalDurationGridRows;
+        element.style.gridRowStart = originalGridRowStart;
+        element.style.gridRowEnd = originalGridRowEnd;
+        return; // Keine visuelle Preview bei Kollision
     }
 
     // Prüfen ob neuer Zeitindex gültig ist
-    if (newTimeIndex < 0 || newTimeIndex >= timeSlots.length) {
+    // WICHTIG: timeSlots enthält nur Stunden! Wir brauchen die Anzahl der timeStep-Slots
+    const [startHour, startMinute] = timeSettings.startTime.split(':').map(Number);
+    const [endHour, endMinute] = timeSettings.endTime.split(':').map(Number);
+    const totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+    const totalTimeStepSlots = Math.floor(totalMinutes / timeSettings.timeStep);
+
+    if (newTimeIndex < 0 || newTimeIndex >= totalTimeStepSlots) {
         return;
     }
 
-    // Visuelle Vorschau aktualisieren
-    const durationSlots = newDuration / timeSettings.timeStep;
-    const newHeight = durationSlots * slotHeight - 4;
-    element.style.height = `${newHeight}px`;
+    // ✅ Visuelle Vorschau mit CSS Grid (5-Minuten-Grid!)
+    const GRID_STEP = 5;
 
-    // Position aktualisieren wenn oben resized wird
-    if (resizeDirection === 'top') {
-        const cell = document.querySelector(`[data-day="${resizeBlock.day}"][data-time-index="${newTimeIndex}"]`);
-        if (cell) {
-            // Element verschieben
-            const oldParent = element.parentElement;
-            if (oldParent !== cell) {
-                cell.appendChild(element);
-            }
-        }
-    }
+    // Berechne Grid-Position für neue Zeit
+    const minutesSinceStart = newTimeIndex * timeSettings.timeStep;
+    const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
+
+    // Berechne Grid-Zeilen für neue Dauer
+    const durationGridRows = Math.floor(newDuration / GRID_STEP);
+    const gridRowEnd = gridRowStart + durationGridRows;
+
+    element.style.gridRowStart = gridRowStart;
+    element.style.gridRowEnd = gridRowEnd;
 }
 
 // Resize beenden
@@ -232,17 +562,20 @@ function handleResizeEnd(e) {
         element.draggable = true;
     }
 
-    // Finale Werte berechnen
-    const slotHeight = calculateSlotHeight();
-    const currentHeight = parseInt(element.style.height);
-    const newDurationSlots = Math.round((currentHeight + 4) / slotHeight);
-    const newDuration = newDurationSlots * timeSettings.timeStep;
+    // ✅ Liest finale Werte aus CSS Grid Position
+    const GRID_STEP = 5;
+    const gridRowStart = parseInt(element.style.gridRowStart);
+    const gridRowEnd = parseInt(element.style.gridRowEnd);
 
-    let newTimeIndex = resizeBlock.timeIndex;
-    if (resizeDirection === 'top') {
-        const cell = element.parentElement;
-        newTimeIndex = parseInt(cell.dataset.timeIndex);
-    }
+    // Grid Row → Minuten seit Tagesbeginn
+    const minutesSinceStart = (gridRowStart - 1) * GRID_STEP;
+
+    // Minuten → timeIndex (basierend auf timeStep)
+    const newTimeIndex = Math.floor(minutesSinceStart / timeSettings.timeStep);
+
+    // Grid-Zeilen → Dauer in Minuten
+    const durationGridRows = gridRowEnd - gridRowStart;
+    const newDuration = durationGridRows * GRID_STEP;
 
     // Daten aktualisieren
     updateBlockAfterResize(resizeBlock, newTimeIndex, newDuration);
@@ -258,15 +591,88 @@ function handleResizeEnd(e) {
 
 // Block-Daten nach Resize aktualisieren
 function updateBlockAfterResize(block, newTimeIndex, newDuration) {
-    // Alte Slots freigeben
+    const newDurationSlots = newDuration / timeSettings.timeStep;
     const oldDurationSlots = block.duration / timeSettings.timeStep;
+
+    // Schritt 1: Alte Slots temporär freigeben
+    const oldBlockedSlots = [];
     for (let i = 0; i < oldDurationSlots; i++) {
         const key = `${block.day}-${block.timeIndex + i}`;
+        oldBlockedSlots.push(key);
         delete scheduledBlocks[key];
     }
 
-    // Neue Slots belegen
-    const newDurationSlots = newDuration / timeSettings.timeStep;
+    // Schritt 2: Kollisionsprüfung für neue Position
+    // Berechne maximale Anzahl timeStep-Slots
+    const [startHour, startMinute] = timeSettings.startTime.split(':').map(Number);
+    const [endHour, endMinute] = timeSettings.endTime.split(':').map(Number);
+    const totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+    const totalTimeStepSlots = Math.floor(totalMinutes / timeSettings.timeStep);
+
+    for (let i = 0; i < newDurationSlots; i++) {
+        const checkTimeIndex = newTimeIndex + i;
+
+        // Prüfen ob außerhalb des Tagesbereichs
+        if (checkTimeIndex >= totalTimeStepSlots) {
+            // Wiederherstellen der alten Slots
+            oldBlockedSlots.forEach(key => {
+                scheduledBlocks[key] = block.id;
+            });
+
+            // Visuelle Position zurücksetzen
+            const element = document.querySelector(`[data-block-id="${block.id}"]`);
+            if (element) {
+                const GRID_STEP = 5;
+                const minutesSinceStart = block.timeIndex * timeSettings.timeStep;
+                const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
+                const durationGridRows = Math.floor(block.duration / GRID_STEP);
+                const gridRowEnd = gridRowStart + durationGridRows;
+                element.style.gridRowStart = gridRowStart;
+                element.style.gridRowEnd = gridRowEnd;
+            }
+
+            // Toast-Benachrichtigung
+            if (typeof showToast === 'function') {
+                showToast('Block passt nicht in den verfügbaren Zeitraum!', 'error', 3000);
+            }
+            return;
+        }
+
+        // Prüfen ob Slot bereits belegt ist (von einem anderen Block)
+        const checkKey = `${block.day}-${checkTimeIndex}`;
+        if (scheduledBlocks[checkKey]) {
+            // Kollision erkannt! Wiederherstellen und abbrechen
+            oldBlockedSlots.forEach(key => {
+                scheduledBlocks[key] = block.id;
+            });
+
+            // Visuelle Position zurücksetzen
+            const element = document.querySelector(`[data-block-id="${block.id}"]`);
+            if (element) {
+                const GRID_STEP = 5;
+                const minutesSinceStart = block.timeIndex * timeSettings.timeStep;
+                const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
+                const durationGridRows = Math.floor(block.duration / GRID_STEP);
+                const gridRowEnd = gridRowStart + durationGridRows;
+                element.style.gridRowStart = gridRowStart;
+                element.style.gridRowEnd = gridRowEnd;
+            }
+
+            // Collision-Feedback mit visueller Hervorhebung
+            const blockingBlockId = scheduledBlocks[checkKey];
+            const blockingBlock = blockRegistry[blockingBlockId];
+            if (typeof showCollisionFeedback === 'function' && blockingBlock) {
+                showCollisionFeedback(blockingBlock, block.day, newTimeIndex);
+            } else {
+                if (typeof showToast === 'function') {
+                    showToast('Dieser Zeitraum ist bereits belegt!', 'error', 3000);
+                }
+            }
+            return;
+        }
+    }
+
+    // Schritt 3: Keine Kollision - neue Slots belegen
     for (let i = 0; i < newDurationSlots; i++) {
         const key = `${block.day}-${newTimeIndex + i}`;
         scheduledBlocks[key] = block.id;
@@ -278,6 +684,16 @@ function updateBlockAfterResize(block, newTimeIndex, newDuration) {
 
     // Block in Registry aktualisieren
     blockRegistry[block.id] = block;
+
+    // ✅ Data-height Attribut aktualisieren für responsive Typography
+    const element = document.querySelector(`[data-block-id="${block.id}"]`);
+    if (element) {
+        const blockHeightPx = (newDuration / 5) * 20; // 20px pro 5-Min-Zeile
+        let heightCategory = 'large';
+        if (blockHeightPx < 40) heightCategory = 'small';
+        else if (blockHeightPx < 80) heightCategory = 'medium';
+        element.setAttribute('data-height', heightCategory);
+    }
 
     console.log(`Block ${block.activity.name} resized: ${newDuration}min ab ${timeSlots[newTimeIndex]}`);
     saveWeek(); // Auto-Save nach Resize
@@ -311,42 +727,53 @@ function getMaxDuration(day, startTimeIndex, currentBlockId) {
 function moveScheduledBlock(block, newDay, newTimeIndex) {
     const durationSlots = block.duration / timeSettings.timeStep;
 
-    // Zuerst das alte DOM-Element entfernen
-    const oldElement = document.querySelector(`[data-block-id="${block.id}"]`);
-    if (oldElement) {
-        oldElement.remove();
-    }
-
     // Alte Position aus scheduledBlocks freigeben
     const oldBlockedSlots = Object.keys(scheduledBlocks).filter(key => scheduledBlocks[key] === block.id);
     oldBlockedSlots.forEach(key => delete scheduledBlocks[key]);
 
-    // Prüfen ob neue Position vollständig frei ist
+    // Kollisionsprüfung (wie bisher)
+    // WICHTIG: timeSlots enthält nur Stunden! Wir brauchen die Anzahl der timeStep-Slots
+    const [startHour, startMinute] = timeSettings.startTime.split(':').map(Number);
+    const [endHour, endMinute] = timeSettings.endTime.split(':').map(Number);
+    const totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+    const totalTimeStepSlots = Math.floor(totalMinutes / timeSettings.timeStep);
+
     for (let i = 0; i < durationSlots; i++) {
         const checkTimeIndex = newTimeIndex + i;
-        // Prüfen ob der Zeitindex im gültigen Bereich liegt
-        if (checkTimeIndex >= timeSlots.length) {
-            alert('Block passt nicht in den verfügbaren Zeitraum!');
-
-            // Bei Fehler: Block an alter Position wiederherstellen
+        if (checkTimeIndex >= totalTimeStepSlots) {
+            // ✅ Toast statt alert für bessere UX
+            if (typeof showToast === 'function') {
+                showToast('Block passt nicht in den verfügbaren Zeitraum!', 'error', 3000);
+            } else {
+                alert('Block passt nicht in den verfügbaren Zeitraum!');
+            }
+            // Wiederherstellen
             for (let j = 0; j < durationSlots; j++) {
                 const restoreKey = `${block.day}-${block.timeIndex + j}`;
                 scheduledBlocks[restoreKey] = block.id;
             }
-            renderScheduledBlock(block);
             return;
         }
 
         const checkKey = `${newDay}-${checkTimeIndex}`;
         if (scheduledBlocks[checkKey]) {
-            alert('Dieser Zeitraum ist bereits belegt!');
-
-            // Bei Fehler: Block an alter Position wiederherstellen
+            // ✅ Collision-Feedback mit visueller Hervorhebung
+            const blockingBlockId = scheduledBlocks[checkKey];
+            const blockingBlock = blockRegistry[blockingBlockId];
+            if (typeof showCollisionFeedback === 'function' && blockingBlock) {
+                showCollisionFeedback(blockingBlock, newDay, newTimeIndex);
+            } else {
+                if (typeof showToast === 'function') {
+                    showToast('Dieser Zeitraum ist bereits belegt!', 'error', 3000);
+                } else {
+                    alert('Dieser Zeitraum ist bereits belegt!');
+                }
+            }
+            // Wiederherstellen
             for (let j = 0; j < durationSlots; j++) {
                 const restoreKey = `${block.day}-${block.timeIndex + j}`;
                 scheduledBlocks[restoreKey] = block.id;
             }
-            renderScheduledBlock(block);
             return;
         }
     }
@@ -360,13 +787,38 @@ function moveScheduledBlock(block, newDay, newTimeIndex) {
     // Block-Daten aktualisieren
     block.day = newDay;
     block.timeIndex = newTimeIndex;
-
-    // Block in Registry aktualisieren
     blockRegistry[block.id] = block;
 
-    // Block an neuer Position rendern
-    renderScheduledBlock(block);
-    saveWeek(); // Auto-Save nach Verschieben
+    // ✅ CSS Grid Position im DOM aktualisieren (KEIN Re-Render!)
+    const element = document.querySelector(`[data-block-id="${block.id}"]`);
+    if (element) {
+        const GRID_STEP = 5;
+
+        // Neue Position berechnen
+        const minutesSinceStart = newTimeIndex * timeSettings.timeStep;
+        const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
+
+        // Dauer in Grid-Zeilen
+        const durationGridRows = Math.floor(block.duration / GRID_STEP);
+        const gridRowEnd = gridRowStart + durationGridRows;
+
+        // Spalte
+        const dayIndex = days.indexOf(newDay);
+        const gridColumn = dayIndex + 2;
+
+        element.style.gridRowStart = gridRowStart;
+        element.style.gridRowEnd = gridRowEnd;
+        element.style.gridColumn = gridColumn;
+
+        // ✅ Data-height Attribut aktualisieren für responsive Typography
+        const blockHeightPx = (block.duration / 5) * 20; // 20px pro 5-Min-Zeile
+        let heightCategory = 'large';
+        if (blockHeightPx < 40) heightCategory = 'small';
+        else if (blockHeightPx < 80) heightCategory = 'medium';
+        element.setAttribute('data-height', heightCategory);
+    }
+
+    saveWeek();
     hasUnsavedChanges = true;
 }
 

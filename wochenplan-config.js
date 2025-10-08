@@ -454,6 +454,9 @@ let timeSlots = [];
 // Wochentage
 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
+// Grid-Konstanten für CSS Grid Native Layout
+const BLOCK_DURATION_STEP = 5; // Minuten - Grid hat 5-Minuten-Zeilen
+
 // Kalender-State
 let scheduledBlocks = {}; // Mapping: "day-timeIndex" -> blockId (für Kollisionsprüfung)
 let blockRegistry = {};   // Mapping: blockId -> Block-Objekt (für Datenpersistenz)

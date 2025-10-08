@@ -2,6 +2,31 @@
 // AUTO-FILL ALGORITHMUS
 // ========================================
 
+// Hilfsfunktion: Prüft ob ein Zeitbereich frei ist
+// Helper: Gesamtanzahl verfügbarer Minuten pro Tag berechnen
+function getTotalDayMinutes() {
+    const [startHour, startMinute] = timeSettings.startTime.split(':').map(Number);
+    const [endHour, endMinute] = timeSettings.endTime.split(':').map(Number);
+    const startTotalMinutes = startHour * 60 + startMinute;
+    const endTotalMinutes = endHour * 60 + endMinute;
+    return endTotalMinutes - startTotalMinutes;
+}
+
+function isTimeRangeFree(day, startMinutes, durationMinutes) {
+    const timeStepMinutes = timeSettings.timeStep;
+    const startTimeIndex = Math.floor(startMinutes / timeStepMinutes);
+    const durationSlots = Math.ceil(durationMinutes / timeStepMinutes);
+
+    for (let i = 0; i < durationSlots; i++) {
+        const checkTimeIndex = startTimeIndex + i;
+        const checkKey = `${day}-${checkTimeIndex}`;
+        if (scheduledBlocks[checkKey]) {
+            return false; // Zeitbereich ist belegt
+        }
+    }
+    return true; // Zeitbereich ist frei
+}
+
 // Hauptfunktion für automatisches Füllen
 function autoFillWeekPlan(ageGroup) {
     console.log(`Erstelle Wochenplan für Altersgruppe: ${ageGroup}`);
@@ -50,7 +75,7 @@ function autoFillWeekPlan(ageGroup) {
 
     if (relevantActivities.length === 0) {
         console.error('Keine relevanten Aktivitäten gefunden für Altersgruppe:', ageGroup);
-        alert(`Keine Aktivitäten für Altersgruppe ${ageGroup} definiert!`);
+        showToast(`Keine Aktivitäten für Altersgruppe ${ageGroup} definiert!`, 'error', 3000);
         return;
     }
 
@@ -697,23 +722,26 @@ function findBestTimeSlot(day, durationMinutes, preferredTimes, activityName = n
 // Geplanten Block erstellen (Hilfsfunktion für Auto-Fill)
 function createScheduledBlock(activity, day, timeIndex, durationMinutes) {
     const blockId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
-    const durationSlots = Math.ceil(durationMinutes / timeSettings.timeStep);
 
-    // KOLLISIONSPRÜFUNG: Prüfen ob alle benötigten Slots frei sind
-    for (let i = 0; i < durationSlots; i++) {
-        const checkTimeIndex = timeIndex + i;
+    // Validierung: Dauer muss Vielfaches von 5 sein
+    if (durationMinutes % BLOCK_DURATION_STEP !== 0) {
+        durationMinutes = Math.round(durationMinutes / BLOCK_DURATION_STEP) * BLOCK_DURATION_STEP;
+    }
 
-        // Prüfen ob der Zeitindex im gültigen Bereich liegt
-        if (checkTimeIndex >= timeSlots.length) {
-            console.warn(`⚠️ Block ${activity.name} passt nicht in den verfügbaren Zeitraum (${day}, Start: ${timeSlots[timeIndex]}, Dauer: ${durationMinutes}min)`);
-            return false;
-        }
+    // Berechne Startzeit in Minuten seit Tagesbeginn
+    const startMinutes = timeIndexToMinutes(timeIndex);
 
-        const checkKey = `${day}-${checkTimeIndex}`;
-        if (scheduledBlocks[checkKey]) {
-            console.warn(`⚠️ KOLLISION ERKANNT: Zeitraum ${day} ${timeSlots[checkTimeIndex]} bereits belegt! Block ${activity.name} wird NICHT platziert.`);
-            return false;
-        }
+    // Prüfen ob Zeitbereich frei ist
+    if (!isTimeRangeFree(day, startMinutes, durationMinutes)) {
+        console.warn(`⚠️ KOLLISION ERKANNT: Zeitraum ${day} ${timeSlots[timeIndex]} bereits belegt! Block ${activity.name} wird NICHT platziert.`);
+        return false;
+    }
+
+    // Prüfen ob Block in verfügbare Tageszeit passt
+    const totalDayMinutes = getTotalDayMinutes();
+    if (startMinutes + durationMinutes > totalDayMinutes) {
+        console.warn(`⚠️ Block ${activity.name} passt nicht in den verfügbaren Zeitraum (${day}, Start: ${timeSlots[timeIndex]}, Dauer: ${durationMinutes}min)`);
+        return false;
     }
 
     const block = {
@@ -727,11 +755,8 @@ function createScheduledBlock(activity, day, timeIndex, durationMinutes) {
     // Block in Registry speichern
     blockRegistry[blockId] = block;
 
-    // Zeitslots blockieren (nur wenn keine Kollision)
-    for (let i = 0; i < durationSlots; i++) {
-        const key = `${day}-${timeIndex + i}`;
-        scheduledBlocks[key] = blockId;
-    }
+    // Zeitslots blockieren
+    occupyTimeSlots(day, startMinutes, durationMinutes, blockId);
 
     // Block-Informationen im Tracking-System registrieren (für Auto-Fill-Logik)
     if (!placedActivitiesByDay[day]) {

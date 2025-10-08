@@ -224,6 +224,12 @@
     <!-- Verstecktes File-Input für Plan laden -->
     <input type="file" id="loadPlanInput" accept=".json" style="display: none;" onchange="handleLoadPlan(event)">
 
+    <!-- Toast-Container für Benachrichtigungen -->
+    <div class="toast-container" role="region" aria-live="polite"></div>
+
+    <!-- Screen-Reader Announcements (unsichtbar) -->
+    <div id="screen-reader-announcements" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
     <!-- Modulare JavaScript-Dateien (Reihenfolge wichtig!) -->
     <script src="wochenplan-config.js"></script>
     <script src="wochenplan-storage.js"></script>
@@ -232,6 +238,13 @@
     <script src="wochenplan-blocks.js"></script>
     <script src="wochenplan-autofill.js"></script>
     <script src="wochenplan-ui.js"></script>
+
+    <!-- Neue Module für kritische Verbesserungen -->
+    <script src="wochenplan-toast.js"></script>
+    <script src="wochenplan-accessibility.js"></script>
+    <script src="wochenplan-touch.js"></script>
+    <script src="wochenplan-keyboard.js"></script>
+
     <script src="wochenplan-main.js"></script>
 </body>
 

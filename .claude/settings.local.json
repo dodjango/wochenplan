@@ -17,7 +17,8 @@
       "mcp__playwright__browser_type",
       "mcp__playwright__browser_handle_dialog",
       "mcp__playwright__browser_close",
-      "WebFetch"
+      "WebFetch",
+      "mcp__playwright__browser_wait_for"
     ],
     "deny": [],
     "ask": []

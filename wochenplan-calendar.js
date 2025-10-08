@@ -33,19 +33,41 @@ function createCalendarGrid() {
     updateCalendarCSS();
 
     timeSlots.forEach((time, timeIndex) => {
-        // Zeit-Spalte
+        // Zeit-Spalte mit expliziter Grid-Positionierung
         const timeCell = document.createElement('div');
         timeCell.className = 'time-slot';
         timeCell.textContent = time;
+
+        // Zeit-Slot muss über mehrere Grid-Zeilen spannen (abhängig von timeStep)
+        const GRID_STEP = 5; // 5-Minuten-Grid
+        const gridRowStart = Math.floor((timeIndex * timeSettings.timeStep) / GRID_STEP) + 1;
+        const timeStepRows = Math.floor(timeSettings.timeStep / GRID_STEP);
+        const gridRowEnd = gridRowStart + timeStepRows;
+
+        timeCell.style.gridColumn = '1'; // Erste Spalte
+        timeCell.style.gridRowStart = gridRowStart;
+        timeCell.style.gridRowEnd = gridRowEnd;
+
         grid.appendChild(timeCell);
 
-        // Tages-Zellen
+        // Tages-Zellen mit expliziter Grid-Positionierung
         days.forEach((day, dayIndex) => {
             const cell = document.createElement('div');
             cell.className = 'calendar-cell';
             cell.dataset.day = day;
             cell.dataset.time = time;
             cell.dataset.timeIndex = timeIndex;
+
+            // Calendar-Cell positionieren (gleiche Zeilen wie time-slot)
+            const GRID_STEP = 5;
+            const gridRowStart = Math.floor((timeIndex * timeSettings.timeStep) / GRID_STEP) + 1;
+            const timeStepRows = Math.floor(timeSettings.timeStep / GRID_STEP);
+            const gridRowEnd = gridRowStart + timeStepRows;
+            const gridColumn = dayIndex + 2; // Spalten 2-8 für Mo-So
+
+            cell.style.gridRowStart = gridRowStart;
+            cell.style.gridRowEnd = gridRowEnd;
+            cell.style.gridColumn = gridColumn;
 
             // Drag & Drop Events
             cell.addEventListener('dragover', (e) => {
@@ -92,26 +114,37 @@ function calculateSlotHeight() {
     return (baseHeight * timeSettings.timeStep) / baseStep;
 }
 
+// TimeIndex in Minuten seit Tagesbeginn umrechnen
+function timeIndexToMinutes(timeIndex) {
+    return timeIndex * timeSettings.timeStep;
+}
+
 // CSS für variable Slot-Höhen dynamisch anpassen
 function updateCalendarCSS() {
-    const slotHeight = calculateSlotHeight();
+    const GRID_STEP = 5; // 5-Minuten-Grid
+    const GRID_ROW_HEIGHT = 20; // px pro 5-Minuten-Zeile (optimiert für weniger Scrollen)
 
-    // Bestehende dynamische Styles entfernen
+    // Gesamtanzahl 5-Minuten-Zeilen berechnen
+    const [startHour, startMinute] = timeSettings.startTime.split(':').map(Number);
+    const [endHour, endMinute] = timeSettings.endTime.split(':').map(Number);
+    const totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+    const total5MinRows = Math.floor(totalMinutes / GRID_STEP);
+
     const existingStyle = document.getElementById('dynamic-calendar-style');
     if (existingStyle) {
         existingStyle.remove();
     }
 
-    // Neue Styles hinzufügen
     const style = document.createElement('style');
     style.id = 'dynamic-calendar-style';
     style.textContent = `
+        .calendar-grid {
+            grid-template-rows: repeat(${total5MinRows}, ${GRID_ROW_HEIGHT}px);
+        }
         .calendar-cell {
-            min-height: ${slotHeight}px;
+            min-height: ${GRID_ROW_HEIGHT}px;
         }
-        .time-slot {
-            min-height: ${slotHeight}px;
-        }
+        /* time-slot Höhe wird durch grid-row-start/end kontrolliert */
     `;
     document.head.appendChild(style);
 }
@@ -140,7 +173,7 @@ function applySettings() {
 
     // Validierung
     if (!startTime || !endTime) {
-        alert('Bitte geben Sie gültige Start- und Endzeiten ein!');
+        showToast('Bitte geben Sie gültige Start- und Endzeiten ein!', 'error', 3000);
         return;
     }
 
@@ -150,7 +183,7 @@ function applySettings() {
     const endTotalMinutes = endHour * 60 + endMinute;
 
     if (startTotalMinutes >= endTotalMinutes) {
-        alert('Die Startzeit muss vor der Endzeit liegen!');
+        showToast('Die Startzeit muss vor der Endzeit liegen!', 'error', 3000);
         return;
     }
 
@@ -172,7 +205,7 @@ function applySettings() {
         createCalendarGrid();
 
         closeSettingsModal();
-        alert('Zeitplan-Einstellungen wurden angewendet!');
+        showToast('Zeitplan-Einstellungen wurden angewendet!', 'success', 3000);
     }
 }
 
