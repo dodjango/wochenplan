@@ -186,7 +186,7 @@ showToast('Dieser Zeitraum ist bereits belegt!', 'error', 3000);
 showToast('Wochenplan gespeichert!', 'success', 2000);
 ```
 
-**Implementation Location:** `wochenplan-ui.js`
+**Implementation Location:** `wochenplan-toast.js`
 
 **Why Toasts?**
 
@@ -317,8 +317,7 @@ Strict z-index hierarchy prevents visual conflicts.
 15. Blocks (collision)  z-index: 15
 20. App Header          z-index: 20
 1000. Modals            z-index: 1000
-10000. Tooltips         z-index: 10000
-10001. Toast Container  z-index: 10001
+10000. Tooltips & Toast z-index: 10000
 ```
 
 **Rule:** Never use arbitrary z-index values. Always reference this hierarchy.

@@ -24,6 +24,15 @@ Eine intelligente HTML/JavaScript-basierte Anwendung zur wöchentlichen Planung 
 
 **✅ Keine Installation oder Webserver erforderlich** - funktioniert vollständig offline!
 
+## 🎯 Zielgruppe
+
+Diese App ist ideal für:
+
+- 👨‍👩‍👧 **Eltern:** Strukturierte Wochenplanung für Kinder
+- 👨‍🏫 **Lehrer:** Visualisierung von Schülerterminen
+- 👧 **Kinder:** Verständliche Darstellung ihrer Woche
+- 🏢 **Betreuungseinrichtungen:** Optimierte Zeitpläne
+
 ## 📋 Features
 
 ### ✨ Intelligenter Auto-Fill-Algorithmus (Vereinfacht & Optimiert)
@@ -31,9 +40,6 @@ Eine intelligente HTML/JavaScript-basierte Anwendung zur wöchentlichen Planung 
 - 👶 **Altersgerechte Planung:** Automatische Wochenpläne für 6-10, 11-14, 15-18 Jahre
 - 📚 **5 Kern-Aktivitäten:** Schule, Hausaufgaben, Üben, Sport, ein zufälliges Musikinstrument
 - 📊 **Offizielle Empfehlungen:** Basierend auf Kultusministerium, WHO und Lerntherapie-Experten
-- 🔒 **Kollisionserkennung:** Verhindert Überschneidungen und Doppelbelegungen
-- 🎵 **Instrumentauswahl:** Zufällige Wahl zwischen Klavier, Trompete oder Saxophon
-- ✅ **Balance-Validator:** Zeigt Erfüllungsgrad der Wochenziele an
 
 ### 🎯 Aktivitäten-Management
 
@@ -57,22 +63,6 @@ Eine intelligente HTML/JavaScript-basierte Anwendung zur wöchentlichen Planung 
 - ⏱️ **Flexibles Zeitraster:** 5, 10, 15 oder 30 Minuten
 - 🕐 **Anpassbare Tageszeiten:** Start- und Endzeit frei wählbar
 - 🔄 **Automatische Anpassung:** Kalender passt sich sofort an neue Einstellungen an
-
-### 🎨 Benutzerfreundliche Oberfläche
-
-- 👋 **Welcome Screen:** Professioneller Startbildschirm mit Beschreibung und klaren Optionen
-- 🏠 **Logo-Navigation:** Zurück zum Startbildschirm über Logo-Button
-- 📌 **Sticky Navigation:** Header, Buttons und Wochentagnamen bleiben beim Scrollen sichtbar
-- 📜 **Natürliches Scrolling:** Flüssiges Seitenscrolling mit fixierten Navigationselementen
-- 🖱️ **Drag & Drop:** Zeitblöcke einfach verschieben und skalieren
-- 🔍 **Resize-Handles:** Blockdauer durch Ziehen anpassen
-- 🚫 **Kollisionserkennung:** Überlappungen werden verhindert
-- 🎨 **Farbkodierung:** Musikalische Aktivitäten einheitlich lila (#9b59b6)
-- 💡 **Tooltips:** Beschreibende Texte beim Hover über Aktivitäten
-- 📱 **Responsive Design:** Funktioniert perfekt auf Desktop, Tablet und Mobile
-- 🔤 **Alphabetische Sortierung:** Aktivitätenliste übersichtlich sortiert
-- 🎨 **Custom Scrollbars:** Elegant gestylte Scrollbalken in Kalender und Sidebar
-- ✨ **Smooth Scrolling:** Sanfte Scroll-Animationen für bessere UX
 
 ### 💾 Datenmanagement
 
@@ -124,19 +114,13 @@ Der Auto-Fill erstellt ein **Grundgerüst** mit 5 Kern-Aktivitäten:
 - **Sportverein** (Praxis Deutschland): 2× pro Woche (6-14 Jahre), 3× pro Woche (15-18 Jahre) - je 90 Min
 - **Musikinstrument**: 10-20 Min (Grundschule), 20-30 Min (Mittelstufe), 30-45 Min (Oberstufe) täglich
 
-## 🌐 Browser-Kompatibilität
-
-- 🟢 **Chrome/Chromium** 60+
-- 🟠 **Firefox** 55+
-- 🔵 **Safari** 12+
-- 🟣 **Microsoft Edge** 79+
-
 ## 🛠 Technische Details
 
 - ⚡ **Keine Abhängigkeiten:** Vanilla JavaScript, HTML5, CSS3
 - 📡 **Offline-fähig:** Funktioniert ohne Internetverbindung
 - 🔧 **Modern APIs:** Drag & Drop, LocalStorage, File API, Blob API
-- 📐 **CSS Grid:** Responsive Kalender-Layout mit dynamischen Zeilen
+- 📐 **CSS Grid Native Layout:** 5-Minuten-Grid-System mit automatischer Browser-Positionierung (20px pro 5-Min-Zeile)
+- 🎯 **Custom UI Components:** Cursor-Following Tooltips und Toast-Notification-System
 - 📄 **Modular:** HTML, CSS und JavaScript getrennt für bessere Wartbarkeit
 - 🎨 **Optimiert:** Keine redundanten CSS-Klassen, generische Hilfsfunktionen
 - 📌 **Sticky Positioning:** Moderne CSS-Technik für fixierte Navigation
@@ -196,10 +180,6 @@ Der Auto-Fill erstellt ein **Grundgerüst** mit 5 Kern-Aktivitäten:
 
 **✅ Lösung:** Browser-Konsole öffnen (F12) und Fehlermeldungen prüfen
 
-### ❓ Problem: "Oma" heißt nicht "Oma besuchen"
-
-**✅ Lösung:** Seite neu laden - Auto-Migration aktualisiert Aktivitätennamen automatisch
-
 ## 📄 JSON-Format (Export/Import)
 
 ```json
@@ -231,15 +211,6 @@ Der Auto-Fill erstellt ein **Grundgerüst** mit 5 Kern-Aktivitäten:
 
 **Hinweis:** Das LocalStorage-Format kann leicht abweichen, da dort zusätzlich `lastModified` und `blockRegistry`
 gespeichert werden.
-
-## 🎯 Zielgruppe
-
-Diese App ist ideal für:
-
-- 👨‍👩‍👧 **Eltern:** Strukturierte Wochenplanung für Kinder
-- 👨‍🏫 **Lehrer:** Visualisierung von Schülerterminen
-- 👧 **Kinder:** Verständliche Darstellung ihrer Woche
-- 🏢 **Betreuungseinrichtungen:** Optimierte Zeitpläne
 
 ---
 
