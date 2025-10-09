@@ -40,6 +40,14 @@ function createActivityBlocks() {
             e.dataTransfer.effectAllowed = 'copy';
         });
 
+        block.addEventListener('dragend', (e) => {
+            draggedActivity = null;
+            // ✅ Preview entfernen beim Drag-Ende
+            if (typeof removeDragPreview === 'function') {
+                removeDragPreview();
+            }
+        });
+
         // Control-Buttons als Overlay
         const controls = document.createElement('div');
         controls.className = 'activity-controls';

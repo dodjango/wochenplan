@@ -78,15 +78,22 @@ function createCalendarGrid() {
                     e.dataTransfer.dropEffect = 'copy';
                 }
                 cell.classList.add('drop-zone');
+
+                // ✅ Drag-Preview anzeigen
+                showDragPreview(day, timeIndex);
             });
 
             cell.addEventListener('dragleave', () => {
                 cell.classList.remove('drop-zone');
+                // Preview wird beim nächsten dragover aktualisiert (flackerfrei)
             });
 
             cell.addEventListener('drop', (e) => {
                 e.preventDefault();
                 cell.classList.remove('drop-zone');
+
+                // ✅ Preview entfernen
+                removeDragPreview();
 
                 if (draggedActivity) {
                     // Neue Aktivität mit minimaler Rasterlänge hinzufügen
@@ -231,4 +238,107 @@ function validateExistingBlocks() {
     if (blocksToRemove.length > 0) {
         console.log(`${blocksToRemove.length} Blöcke außerhalb des neuen Zeitbereichs entfernt`);
     }
+}
+
+// ========================================
+// DRAG-PREVIEW-SYSTEM
+// ========================================
+
+let currentDragPreview = null;
+
+// Drag-Preview anzeigen
+function showDragPreview(targetDay, targetTimeIndex) {
+    // Bestimme Block-Daten basierend auf Drag-Typ
+    let activity, duration, blockColor;
+
+    if (currentDraggedBlock) {
+        // Bestehenden Block verschieben
+        activity = currentDraggedBlock.activity;
+        duration = currentDraggedBlock.duration;
+        blockColor = activity.color;
+    } else if (draggedActivity) {
+        // Neue Aktivität platzieren
+        activity = draggedActivity;
+        duration = timeSettings.timeStep;
+        blockColor = activity.color;
+    } else {
+        // Kein Drag aktiv
+        removeDragPreview();
+        return;
+    }
+
+    // Prüfe ob Position gültig ist (Kollisionserkennung)
+    const hasCollision = checkDragCollision(targetDay, targetTimeIndex, duration);
+
+    // Alte Preview entfernen
+    removeDragPreview();
+
+    // Neue Preview erstellen
+    const preview = document.createElement('div');
+    preview.className = 'drag-preview';
+    if (hasCollision) {
+        preview.classList.add('collision');
+    }
+
+    // Grid-Position berechnen
+    const GRID_STEP = 5;
+    const minutesSinceStart = targetTimeIndex * timeSettings.timeStep;
+    const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
+    const durationGridRows = Math.floor(duration / GRID_STEP);
+    const gridRowEnd = gridRowStart + durationGridRows;
+    const dayIndex = days.indexOf(targetDay);
+    const gridColumn = dayIndex + 2;
+
+    preview.style.gridRowStart = gridRowStart;
+    preview.style.gridRowEnd = gridRowEnd;
+    preview.style.gridColumn = gridColumn;
+    preview.style.backgroundColor = blockColor;
+    preview.style.pointerEvents = 'none'; // Nicht interagierbar
+    preview.textContent = activity.name;
+
+    // Preview ins Grid einfügen
+    const grid = document.getElementById('calendarGrid');
+    grid.appendChild(preview);
+
+    currentDragPreview = preview;
+}
+
+// Drag-Preview entfernen
+function removeDragPreview() {
+    if (currentDragPreview) {
+        currentDragPreview.remove();
+        currentDragPreview = null;
+    }
+}
+
+// Kollisionsprüfung für Drag-Preview
+function checkDragCollision(targetDay, targetTimeIndex, duration) {
+    const durationSlots = duration / timeSettings.timeStep;
+
+    // Berechne max verfügbare Slots
+    const [startHour, startMinute] = timeSettings.startTime.split(':').map(Number);
+    const [endHour, endMinute] = timeSettings.endTime.split(':').map(Number);
+    const totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute);
+    const totalTimeStepSlots = Math.floor(totalMinutes / timeSettings.timeStep);
+
+    // Prüfe alle benötigten Slots
+    for (let i = 0; i < durationSlots; i++) {
+        const checkTimeIndex = targetTimeIndex + i;
+
+        // Außerhalb des Tagesbereichs?
+        if (checkTimeIndex >= totalTimeStepSlots) {
+            return true; // Kollision: Überschreitet Tagesende
+        }
+
+        // Slot bereits belegt?
+        const checkKey = `${targetDay}-${checkTimeIndex}`;
+        const blockingId = scheduledBlocks[checkKey];
+
+        // Wenn ein Block gefunden wurde UND es nicht der aktuell verschobene Block ist
+        if (blockingId && blockingId !== (currentDraggedBlock?.id)) {
+            return true; // Kollision: Slot bereits belegt
+        }
+    }
+
+    return false; // Keine Kollision
 }

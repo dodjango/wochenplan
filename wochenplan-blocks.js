@@ -361,9 +361,9 @@ function renderScheduledBlock(block) {
         draggedActivity = null;
         e.dataTransfer.effectAllowed = 'move';
 
-        // Canvas für Drag-Image (wie bisher)
-        const canvas = document.createElement('canvas');
+        // Canvas für Drag-Image
         const rect = element.getBoundingClientRect();
+        const canvas = document.createElement('canvas');
         canvas.width = rect.width;
         canvas.height = rect.height;
         const ctx = canvas.getContext('2d');
@@ -377,7 +377,12 @@ function renderScheduledBlock(block) {
         ctx.textBaseline = 'middle';
         ctx.fillText(block.activity.name, canvas.width / 2, canvas.height / 2);
 
-        e.dataTransfer.setDragImage(canvas, canvas.width / 2, canvas.height / 2);
+        // ✅ KRITISCH: Greifpunkt-basiertes Drag-Image
+        // Berechne wo im Block der Nutzer geklickt hat
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+        // Drag-Image an GREIFSTELLE verankern (nicht mittig!)
+        e.dataTransfer.setDragImage(canvas, offsetX, offsetY);
 
         setTimeout(() => element.classList.add('dragging'), 0);
     });
@@ -388,6 +393,11 @@ function renderScheduledBlock(block) {
         document.querySelectorAll('.drop-zone').forEach(cell => {
             cell.classList.remove('drop-zone');
         });
+
+        // ✅ Preview entfernen beim Drag-Ende
+        if (typeof removeDragPreview === 'function') {
+            removeDragPreview();
+        }
     });
 
     // ✅ Keyboard-Fokus + ARIA
