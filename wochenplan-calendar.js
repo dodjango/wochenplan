@@ -32,6 +32,9 @@ function createCalendarGrid() {
     // CSS für variable Slot-Höhen aktualisieren
     updateCalendarCSS();
 
+    // Berechne, wie viele timeStep-Slots eine Stunde bilden
+    const cellsPerHour = 60 / timeSettings.timeStep;
+
     timeSlots.forEach((time, timeIndex) => {
         // Zeit-Spalte mit expliziter Grid-Positionierung
         const timeCell = document.createElement('div');
@@ -58,8 +61,22 @@ function createCalendarGrid() {
             cell.dataset.time = time;
             cell.dataset.timeIndex = timeIndex;
 
+            // ✅ NEUE LOGIK: Visuelle Hierarchie für Grid-Linien
+            // Stündliche Linie (jede Stunde = cellsPerHour Slots)
+            if (timeIndex % cellsPerHour === 0) {
+                cell.classList.add('hour-line');
+            }
+            // Halbe-Stunden-Linie (nur wenn timeStep ≤ 30 Min)
+            else if (cellsPerHour >= 4 && timeIndex % (cellsPerHour / 2) === 0) {
+                cell.classList.add('half-hour-line');
+            }
+
+            // Tagesanfang hervorheben
+            if (timeIndex === 0) {
+                cell.classList.add('day-start');
+            }
+
             // Calendar-Cell positionieren (gleiche Zeilen wie time-slot)
-            const GRID_STEP = 5;
             const gridRowStart = Math.floor((timeIndex * timeSettings.timeStep) / GRID_STEP) + 1;
             const timeStepRows = Math.floor(timeSettings.timeStep / GRID_STEP);
             const gridRowEnd = gridRowStart + timeStepRows;
@@ -96,8 +113,8 @@ function createCalendarGrid() {
                 removeDragPreview();
 
                 if (draggedActivity) {
-                    // Neue Aktivität mit minimaler Rasterlänge hinzufügen
-                    const duration = timeSettings.timeStep;
+                    // Neue Aktivität mit minimaler Dauer (5 Minuten)
+                    const duration = RESIZE_STEP; // Immer 5 Min Minimum
                     addScheduledBlock(day, timeIndex, draggedActivity, duration);
                 } else if (currentDraggedBlock) {
                     // Bestehende Aktivität verschieben
@@ -259,7 +276,7 @@ function showDragPreview(targetDay, targetTimeIndex) {
     } else if (draggedActivity) {
         // Neue Aktivität platzieren
         activity = draggedActivity;
-        duration = timeSettings.timeStep;
+        duration = RESIZE_STEP; // Immer 5 Min Minimum
         blockColor = activity.color;
     } else {
         // Kein Drag aktiv

@@ -724,8 +724,13 @@ function createScheduledBlock(activity, day, timeIndex, durationMinutes) {
     const blockId = Date.now().toString() + Math.random().toString(36).substr(2, 9);
 
     // Validierung: Dauer muss Vielfaches von 5 sein
-    if (durationMinutes % BLOCK_DURATION_STEP !== 0) {
-        durationMinutes = Math.round(durationMinutes / BLOCK_DURATION_STEP) * BLOCK_DURATION_STEP;
+    if (durationMinutes % RESIZE_STEP !== 0) {
+        durationMinutes = Math.round(durationMinutes / RESIZE_STEP) * RESIZE_STEP;
+    }
+
+    // Minimum: 5 Minuten
+    if (durationMinutes < RESIZE_STEP) {
+        durationMinutes = RESIZE_STEP;
     }
 
     // Berechne Startzeit in Minuten seit Tagesbeginn

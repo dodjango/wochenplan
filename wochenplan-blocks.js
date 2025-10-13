@@ -31,17 +31,16 @@ function getTooltipElement() {
 function generateTooltipContent(block) {
     const tooltip = getTooltipElement();
 
-    // Zeitberechnung: timeIndex ist in timeStep-Einheiten ab Tagesbeginn (startTime)
-    const startTimeIndex = block.timeIndex;
-    const endTimeIndex = block.timeIndex + Math.floor(block.duration / timeSettings.timeStep);
+    // ✅ NEU: Verwende startMinutes für exakte Zeitberechnung (mit Backward Compatibility)
+    const blockStartMinutes = block.startMinutes !== undefined ? block.startMinutes : (block.timeIndex * timeSettings.timeStep);
 
     // Parse startTime aus Einstellungen (z.B. "06:00")
     const [dayStartHour, dayStartMinute] = timeSettings.startTime.split(':').map(Number);
     const dayStartMinutes = dayStartHour * 60 + dayStartMinute;
 
     // Berechne absolute Minuten ab Mitternacht
-    const startMinutesFromMidnight = dayStartMinutes + (startTimeIndex * timeSettings.timeStep);
-    const endMinutesFromMidnight = dayStartMinutes + (endTimeIndex * timeSettings.timeStep);
+    const startMinutesFromMidnight = dayStartMinutes + blockStartMinutes;
+    const endMinutesFromMidnight = startMinutesFromMidnight + block.duration;
 
     // Konvertiere zu Stunden und Minuten
     const startHour = Math.floor(startMinutesFromMidnight / 60);
@@ -211,7 +210,8 @@ function cleanupTooltip() {
 // Geplanten Block hinzufügen
 function addScheduledBlock(day, timeIndex, activity, duration) {
     const blockId = Date.now().toString();
-    const durationSlots = duration / timeSettings.timeStep;
+    // WICHTIG: Duration kann in 5-Min-Schritten sein (nicht nur timeStep)
+    const durationSlots = Math.ceil(duration / timeSettings.timeStep);
 
     // Prüfen ob genügend aufeinanderfolgende freie Slots verfügbar sind
     for (let i = 0; i < durationSlots; i++) {
@@ -246,10 +246,14 @@ function addScheduledBlock(day, timeIndex, activity, duration) {
     }
 
     // Block erstellen
+    // ✅ startMinutes: Exakte Startzeit in Minuten ab Tagesbeginn (für 5-Min-Präzision)
+    const startMinutes = timeIndex * timeSettings.timeStep;
+
     const block = {
         id: blockId,
         day: day,
         timeIndex: timeIndex,
+        startMinutes: startMinutes,  // NEU: Exakte Startzeit für 5-Min-Präzision
         activity: activity,
         duration: duration
     };
@@ -301,8 +305,9 @@ function renderScheduledBlock(block) {
     // ✅ Grid-Position berechnen (5-Minuten-Grid!)
     const GRID_STEP = 5; // Grid hat 5-Minuten-Zeilen
 
-    // Start: timeIndex → Minuten → Grid Row
-    const minutesSinceStart = block.timeIndex * timeSettings.timeStep;
+    // Start: startMinutes → Grid Row (mit Backward Compatibility)
+    // NEU: Verwende startMinutes wenn vorhanden, sonst berechne aus timeIndex
+    const minutesSinceStart = block.startMinutes !== undefined ? block.startMinutes : (block.timeIndex * timeSettings.timeStep);
     const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
 
     // Dauer: Minuten → Anzahl Grid-Zeilen
@@ -457,74 +462,93 @@ function handleResizeMove(e) {
     const element = document.querySelector(`[data-block-id="${resizeBlock.id}"]`);
     if (!element) return;
 
-    // ✅ WICHTIG: In Grid-Architektur ist die Slot-Höhe konstant
+    // ✅ KRITISCH: Resize snappt auf 5-Minuten (UNABHÄNGIG von timeStep)
     const GRID_ROW_HEIGHT = 20; // px pro 5-Min-Zeile (muss mit updateCalendarCSS() übereinstimmen!)
-    const timeStepRows = timeSettings.timeStep / 5; // z.B. 10/5 = 2 Zeilen pro timeStep
-    const timeStepHeight = GRID_ROW_HEIGHT * timeStepRows; // z.B. 20 * 2 = 40px pro timeStep
+    const resizeStepHeight = GRID_ROW_HEIGHT; // 20px pro 5-Min-Schritt
 
     const deltaY = e.clientY - resizeStartY;
-    const deltaSlots = Math.round(deltaY / timeStepHeight);
+    const deltaResizeSteps = Math.round(deltaY / resizeStepHeight); // Anzahl 5-Min-Schritte
 
     let newDuration = resizeBlock.duration;
     let newTimeIndex = resizeBlock.timeIndex;
 
     if (resizeDirection === 'bottom') {
-        // Bottom-Resize: Start bleibt fix, Ende wächst
-        newDuration = resizeBlock.duration + (deltaSlots * timeSettings.timeStep);
+        // Bottom-Resize: Start bleibt fix, Ende wächst (in 5-Min-Schritten)
+        newDuration = resizeBlock.duration + (deltaResizeSteps * RESIZE_STEP);
         const maxDuration = getMaxDuration(resizeBlock.day, newTimeIndex, resizeBlock.id);
         if (newDuration > maxDuration) {
             newDuration = maxDuration;
         }
     } else if (resizeDirection === 'top') {
-        // Top-Resize: Ende bleibt fix, Start bewegt sich nach oben
-        // WICHTIG: Konsistentes Verhalten - Block stoppt bei Kollision, kein "Rutschen"
-        const originalEndTimeIndex = resizeBlock.timeIndex + Math.floor(resizeBlock.duration / timeSettings.timeStep);
-        const attemptedNewTimeIndex = resizeBlock.timeIndex + deltaSlots;
+        // Top-Resize: Ende bleibt fix, Start bewegt sich nach oben (in 5-Min-Schritten)
+        // ✅ NEU: Verwende startMinutes für exakte Berechnung
+        const originalStartMinutes = resizeBlock.startMinutes !== undefined ? resizeBlock.startMinutes : (resizeBlock.timeIndex * timeSettings.timeStep);
+        const originalEndMinutes = originalStartMinutes + resizeBlock.duration;
 
-        // Finde den frühesten erlaubten Start-Zeitpunkt (nach allen Kollisionen)
-        let earliestValidStart = attemptedNewTimeIndex;
+        // Berechne neue Start-Position in 5-Min-Schritten
+        const attemptedNewStartMinutes = originalStartMinutes + (deltaResizeSteps * RESIZE_STEP);
 
-        // Prüfe jeden Slot von attemptedNewTimeIndex bis zum aktuellen Start
+        // Runde auf 5-Min-Grenze (WICHTIG: VOR Kollisionsprüfung!)
+        let newStartMinutesRounded = Math.round(attemptedNewStartMinutes / RESIZE_STEP) * RESIZE_STEP;
+
+        // Konvertiere zu timeIndex für Kollisionsprüfung
+        const attemptedNewTimeIndex = Math.floor(newStartMinutesRounded / timeSettings.timeStep);
+
+        // Finde frühesten erlaubten Start (nach Kollisionen)
+        let earliestValidStartMinutes = newStartMinutesRounded;
+
+        // Prüfe jeden timeStep-Slot von attemptedNewTimeIndex bis zum aktuellen Start
         for (let checkIndex = attemptedNewTimeIndex; checkIndex < resizeBlock.timeIndex; checkIndex++) {
             const maxDurationFromHere = getMaxDuration(resizeBlock.day, checkIndex, resizeBlock.id);
-            const requiredDuration = (originalEndTimeIndex - checkIndex) * timeSettings.timeStep;
+            const requiredDuration = originalEndMinutes - (checkIndex * timeSettings.timeStep);
 
-            // Wenn von hier aus die Duration nicht bis zum Ende reicht: Kollision!
             if (maxDurationFromHere < requiredDuration) {
-                // Finde wo der blockierende Block ENDET
-                const collisionStartsAt = checkIndex + Math.floor(maxDurationFromHere / timeSettings.timeStep);
-                const blockingKey = `${resizeBlock.day}-${collisionStartsAt}`;
+                // Kollision gefunden - finde wo der blockierende Block endet
+                const collisionSlotIndex = checkIndex + Math.floor(maxDurationFromHere / timeSettings.timeStep);
+                const blockingKey = `${resizeBlock.day}-${collisionSlotIndex}`;
                 const blockingBlockId = scheduledBlocks[blockingKey];
 
                 if (blockingBlockId) {
                     const blockingBlock = blockRegistry[blockingBlockId];
-                    const blockingDurationSlots = Math.floor(blockingBlock.duration / timeSettings.timeStep);
-                    const blockingEndIndex = blockingBlock.timeIndex + blockingDurationSlots;
-                    earliestValidStart = blockingEndIndex;
+                    // ✅ NEU: Verwende startMinutes des blockierenden Blocks wenn verfügbar
+                    const blockingStartMinutes = blockingBlock.startMinutes !== undefined ? blockingBlock.startMinutes : (blockingBlock.timeIndex * timeSettings.timeStep);
+                    const blockingEndMinutes = blockingStartMinutes + blockingBlock.duration;
+                    // Start NACH dem blockierenden Block (auf 5-Min-Grenze gerundet)
+                    earliestValidStartMinutes = Math.ceil(blockingEndMinutes / RESIZE_STEP) * RESIZE_STEP;
                 } else {
-                    // Fallback: Direkt nach der erkannten Kollision
-                    earliestValidStart = collisionStartsAt;
+                    earliestValidStartMinutes = checkIndex * timeSettings.timeStep;
                 }
-                break; // Erste Kollision gefunden, das ist unser Limit
+                break;
             }
         }
 
-        newTimeIndex = earliestValidStart;
-        newDuration = (originalEndTimeIndex - newTimeIndex) * timeSettings.timeStep;
+        // ✅ KRITISCHE ÄNDERUNG: Behalte 5-Min-Präzision in startMinutes
+        newStartMinutesRounded = Math.max(newStartMinutesRounded, earliestValidStartMinutes);
+
+        // timeIndex NUR für Slot-Mapping berechnen (aufrunden für partielle Slots)
+        newTimeIndex = Math.floor(newStartMinutesRounded / timeSettings.timeStep);
+
+        // Neue Dauer berechnen (in 5-Min-Präzision)
+        newDuration = originalEndMinutes - newStartMinutesRounded;
+
+        // ✅ NEU: Speichere neue startMinutes temporär für handleResizeEnd
+        resizeBlock.tempNewStartMinutes = newStartMinutesRounded;
     }
 
-    // Minimum: Ein Zeitslot
-    if (newDuration < timeSettings.timeStep) {
-        newDuration = timeSettings.timeStep;
+    // Minimum: 5 Minuten (RESIZE_STEP)
+    if (newDuration < RESIZE_STEP) {
+        newDuration = RESIZE_STEP;
         if (resizeDirection === 'top') {
-            const originalEndTimeIndex = resizeBlock.timeIndex + Math.floor(resizeBlock.duration / timeSettings.timeStep);
-            newTimeIndex = originalEndTimeIndex - 1; // Ein Slot vor dem Ende
+            // Bei Top-Resize: Berechne neuen Start-Index basierend auf fixem Ende
+            const originalEndMinutes = (resizeBlock.timeIndex * timeSettings.timeStep) + resizeBlock.duration;
+            const newStartMinutes = originalEndMinutes - RESIZE_STEP;
+            newTimeIndex = Math.floor(newStartMinutes / timeSettings.timeStep);
         }
     }
 
     // WICHTIG: Wenn resultierende Dauer kleiner als Minimum ist, Resize-Preview blockieren
     // Dies verhindert, dass eine invalide Kollisions-Position visuell angezeigt wird
-    if (newDuration < timeSettings.timeStep) {
+    if (newDuration < RESIZE_STEP) {
         // Grid-Position auf ORIGINAL-Werte zurücksetzen
         const GRID_STEP = 5;
         const originalMinutesSinceStart = resizeBlock.timeIndex * timeSettings.timeStep;
@@ -533,7 +557,7 @@ function handleResizeMove(e) {
         const originalGridRowEnd = originalGridRowStart + originalDurationGridRows;
         element.style.gridRowStart = originalGridRowStart;
         element.style.gridRowEnd = originalGridRowEnd;
-        return; // Keine visuelle Preview bei Kollision
+        return; // Keine visuelle Preview bei zu kleiner Dauer
     }
 
     // Prüfen ob neuer Zeitindex gültig ist
@@ -551,7 +575,13 @@ function handleResizeMove(e) {
     const GRID_STEP = 5;
 
     // Berechne Grid-Position für neue Zeit
-    const minutesSinceStart = newTimeIndex * timeSettings.timeStep;
+    // ✅ NEU: Verwende tempNewStartMinutes bei Top-Resize, sonst berechne aus timeIndex
+    let minutesSinceStart;
+    if (resizeDirection === 'top' && resizeBlock.tempNewStartMinutes !== undefined) {
+        minutesSinceStart = resizeBlock.tempNewStartMinutes;
+    } else {
+        minutesSinceStart = newTimeIndex * timeSettings.timeStep;
+    }
     const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
 
     // Berechne Grid-Zeilen für neue Dauer
@@ -577,22 +607,27 @@ function handleResizeEnd(e) {
     const gridRowStart = parseInt(element.style.gridRowStart);
     const gridRowEnd = parseInt(element.style.gridRowEnd);
 
-    // Grid Row → Minuten seit Tagesbeginn
-    const minutesSinceStart = (gridRowStart - 1) * GRID_STEP;
+    // Grid Row → Minuten seit Tagesbeginn (exakte 5-Min-Präzision!)
+    const newStartMinutes = (gridRowStart - 1) * GRID_STEP;
 
-    // Minuten → timeIndex (basierend auf timeStep)
-    const newTimeIndex = Math.floor(minutesSinceStart / timeSettings.timeStep);
+    // Minuten → timeIndex (basierend auf timeStep, für Slot-Mapping)
+    const newTimeIndex = Math.floor(newStartMinutes / timeSettings.timeStep);
 
     // Grid-Zeilen → Dauer in Minuten
     const durationGridRows = gridRowEnd - gridRowStart;
     const newDuration = durationGridRows * GRID_STEP;
 
-    // Daten aktualisieren
-    updateBlockAfterResize(resizeBlock, newTimeIndex, newDuration);
+    // Daten aktualisieren - ✅ NEU: Übergebe startMinutes
+    updateBlockAfterResize(resizeBlock, newTimeIndex, newDuration, newStartMinutes);
 
     // Cleanup
     document.removeEventListener('mousemove', handleResizeMove);
     document.removeEventListener('mouseup', handleResizeEnd);
+
+    // ✅ NEU: Cleanup temporäre Resize-Daten
+    if (resizeBlock && resizeBlock.tempNewStartMinutes !== undefined) {
+        delete resizeBlock.tempNewStartMinutes;
+    }
 
     isResizing = false;
     resizeDirection = null;
@@ -600,9 +635,12 @@ function handleResizeEnd(e) {
 }
 
 // Block-Daten nach Resize aktualisieren
-function updateBlockAfterResize(block, newTimeIndex, newDuration) {
-    const newDurationSlots = newDuration / timeSettings.timeStep;
-    const oldDurationSlots = block.duration / timeSettings.timeStep;
+// ✅ NEU: Akzeptiert startMinutes für 5-Min-Präzision
+function updateBlockAfterResize(block, newTimeIndex, newDuration, newStartMinutes) {
+    // WICHTIG: Da Duration jetzt in 5-Min-Schritten sein kann, müssen wir
+    // Slots basierend auf timeStep berechnen (aufrunden für partielle Slots)
+    const newDurationSlots = Math.ceil(newDuration / timeSettings.timeStep);
+    const oldDurationSlots = Math.ceil(block.duration / timeSettings.timeStep);
 
     // Schritt 1: Alte Slots temporär freigeben
     const oldBlockedSlots = [];
@@ -691,6 +729,8 @@ function updateBlockAfterResize(block, newTimeIndex, newDuration) {
     // Block-Objekt aktualisieren
     block.timeIndex = newTimeIndex;
     block.duration = newDuration;
+    // ✅ NEU: Speichere startMinutes für 5-Min-Präzision
+    block.startMinutes = newStartMinutes !== undefined ? newStartMinutes : (newTimeIndex * timeSettings.timeStep);
 
     // Block in Registry aktualisieren
     blockRegistry[block.id] = block;
@@ -735,7 +775,8 @@ function getMaxDuration(day, startTimeIndex, currentBlockId) {
 
 // Block verschieben
 function moveScheduledBlock(block, newDay, newTimeIndex) {
-    const durationSlots = block.duration / timeSettings.timeStep;
+    // WICHTIG: Duration kann in 5-Min-Schritten sein (nicht nur timeStep)
+    const durationSlots = Math.ceil(block.duration / timeSettings.timeStep);
 
     // Alte Position aus scheduledBlocks freigeben
     const oldBlockedSlots = Object.keys(scheduledBlocks).filter(key => scheduledBlocks[key] === block.id);
@@ -797,6 +838,8 @@ function moveScheduledBlock(block, newDay, newTimeIndex) {
     // Block-Daten aktualisieren
     block.day = newDay;
     block.timeIndex = newTimeIndex;
+    // ✅ NEU: Aktualisiere startMinutes basierend auf neuem timeIndex
+    block.startMinutes = newTimeIndex * timeSettings.timeStep;
     blockRegistry[block.id] = block;
 
     // ✅ CSS Grid Position im DOM aktualisieren (KEIN Re-Render!)
@@ -804,8 +847,8 @@ function moveScheduledBlock(block, newDay, newTimeIndex) {
     if (element) {
         const GRID_STEP = 5;
 
-        // Neue Position berechnen
-        const minutesSinceStart = newTimeIndex * timeSettings.timeStep;
+        // Neue Position berechnen - ✅ NEU: Verwende startMinutes
+        const minutesSinceStart = block.startMinutes;
         const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
 
         // Dauer in Grid-Zeilen

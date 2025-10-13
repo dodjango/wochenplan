@@ -105,7 +105,7 @@ function handleActivityTouchEnd(e) {
         // Block platzieren
         const day = dropCell.dataset.day;
         const timeIndex = parseInt(dropCell.dataset.timeIndex);
-        const duration = timeSettings.timeStep;
+        const duration = RESIZE_STEP; // Immer 5 Min Minimum
 
         addScheduledBlock(day, timeIndex, touchState.currentActivity, duration);
         triggerHapticFeedback();
@@ -276,36 +276,45 @@ function handleResizeTouchMove(e) {
     const touch = e.touches[0];
     const deltaY = touch.clientY - touchState.startY;
 
-    const GRID_ROW_HEIGHT = 20;
-    const timeStepRows = timeSettings.timeStep / 5;
-    const timeStepHeight = GRID_ROW_HEIGHT * timeStepRows;
+    // ✅ KRITISCH: Touch-Resize snappt auf 5-Minuten (UNABHÄNGIG von timeStep)
+    const GRID_ROW_HEIGHT = 20; // px pro 5-Min-Zeile
+    const resizeStepHeight = GRID_ROW_HEIGHT; // 20px pro 5-Min-Schritt
 
-    const deltaSlots = Math.round(deltaY / timeStepHeight);
+    const deltaResizeSteps = Math.round(deltaY / resizeStepHeight); // Anzahl 5-Min-Schritte
 
     let newDuration = touchState.resizeStartDuration;
     let newTimeIndex = touchState.resizeStartTimeIndex;
 
     if (touchState.mode === 'resize-bottom') {
-        newDuration = touchState.resizeStartDuration + (deltaSlots * timeSettings.timeStep);
+        // Bottom-Resize: Start bleibt fix, Ende wächst (in 5-Min-Schritten)
+        newDuration = touchState.resizeStartDuration + (deltaResizeSteps * RESIZE_STEP);
     } else if (touchState.mode === 'resize-top') {
-        const durationChange = -deltaSlots * timeSettings.timeStep;
+        // Top-Resize: Ende bleibt fix, Start bewegt sich (in 5-Min-Schritten)
+        const durationChange = -deltaResizeSteps * RESIZE_STEP;
         newDuration = touchState.resizeStartDuration + durationChange;
-        newTimeIndex = touchState.resizeStartTimeIndex + deltaSlots;
+        newTimeIndex = touchState.resizeStartTimeIndex + deltaResizeSteps;
     }
 
-    // Minimum: Ein Zeitslot
-    if (newDuration < timeSettings.timeStep) {
-        newDuration = timeSettings.timeStep;
+    // Minimum: 5 Minuten (RESIZE_STEP)
+    if (newDuration < RESIZE_STEP) {
+        newDuration = RESIZE_STEP;
         if (touchState.mode === 'resize-top') {
-            newTimeIndex = touchState.resizeStartTimeIndex + Math.floor((touchState.resizeStartDuration - timeSettings.timeStep) / timeSettings.timeStep);
+            newTimeIndex = touchState.resizeStartTimeIndex + Math.floor((touchState.resizeStartDuration - RESIZE_STEP) / RESIZE_STEP);
         }
     }
 
-    // Visuelle Vorschau
+    // Visuelle Vorschau (Grid-basiert)
     const element = touchState.currentTarget;
-    const durationSlots = newDuration / timeSettings.timeStep;
-    const newHeight = durationSlots * timeStepHeight - 4;
-    element.style.height = `${newHeight}px`;
+    const GRID_STEP = 5;
+    const durationGridRows = Math.floor(newDuration / GRID_STEP);
+
+    // Setze Grid-Position statt Height
+    const minutesSinceStart = newTimeIndex * timeSettings.timeStep;
+    const gridRowStart = Math.floor(minutesSinceStart / GRID_STEP) + 1;
+    const gridRowEnd = gridRowStart + durationGridRows;
+
+    element.style.gridRowStart = gridRowStart;
+    element.style.gridRowEnd = gridRowEnd;
 
     // Position aktualisieren bei top-resize
     if (touchState.mode === 'resize-top') {
@@ -324,23 +333,23 @@ function handleResizeTouchEnd(e) {
     const element = touchState.currentTarget;
     element.classList.remove('resizing');
 
-    // Finale Werte berechnen
-    const GRID_ROW_HEIGHT = 20;
-    const timeStepRows = timeSettings.timeStep / 5;
-    const timeStepHeight = GRID_ROW_HEIGHT * timeStepRows;
+    // Finale Werte aus Grid-Position berechnen
+    const GRID_STEP = 5;
+    const gridRowStart = parseInt(element.style.gridRowStart);
+    const gridRowEnd = parseInt(element.style.gridRowEnd);
 
-    const currentHeight = parseInt(element.style.height);
-    const newDurationSlots = Math.round((currentHeight + 4) / timeStepHeight);
-    const newDuration = newDurationSlots * timeSettings.timeStep;
+    // Grid Row → Minuten seit Tagesbeginn
+    const minutesSinceStart = (gridRowStart - 1) * GRID_STEP;
 
-    let newTimeIndex = touchState.resizeStartTimeIndex;
-    if (touchState.mode === 'resize-top') {
-        const cell = element.parentElement;
-        newTimeIndex = parseInt(cell.dataset.timeIndex);
-    }
+    // Minuten → timeIndex (basierend auf timeStep)
+    const newTimeIndexFinal = Math.floor(minutesSinceStart / timeSettings.timeStep);
 
-    // Daten aktualisieren
-    updateBlockAfterResize(touchState.currentBlock, newTimeIndex, newDuration);
+    // Grid-Zeilen → Dauer in Minuten
+    const durationGridRows = gridRowEnd - gridRowStart;
+    const newDuration = durationGridRows * GRID_STEP;
+
+    // Daten aktualisieren (nutze berechnete Werte)
+    updateBlockAfterResize(touchState.currentBlock, newTimeIndexFinal, newDuration);
 
     triggerHapticFeedback();
 

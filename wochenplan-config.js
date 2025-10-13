@@ -455,7 +455,8 @@ let timeSlots = [];
 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 // Grid-Konstanten für CSS Grid Native Layout
-const BLOCK_DURATION_STEP = 5; // Minuten - Grid hat 5-Minuten-Zeilen
+const GRID_STEP = 5; // Minuten - Grid hat 5-Minuten-Zeilen (für Anzeige)
+const RESIZE_STEP = 5; // Minuten - Resize-Snapping (UNABHÄNGIG von timeStep)
 
 // Kalender-State
 let scheduledBlocks = {}; // Mapping: "day-timeIndex" -> blockId (für Kollisionsprüfung)

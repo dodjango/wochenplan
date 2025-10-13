@@ -25,6 +25,8 @@
       "Bash(podman:*)",
       "Bash(kubectl:*)",
       "Bash(helm:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
       "mcp__playwright__browser_navigate",
       "mcp__playwright__browser_click",
       "mcp__playwright__browser_drag",
@@ -37,6 +39,7 @@
       "mcp__playwright__browser_close",
       "mcp__playwright__browser_wait_for",
       "mcp__playwright__browser_console_messages",
+      "mcp__playwright__browser_select_option",
       "WebFetch",
       "WebSearch"
     ],

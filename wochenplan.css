@@ -139,27 +139,70 @@ h1 {
 .calendar-grid {
     display: grid;
     grid-template-columns: 80px repeat(7, 1fr);
-    gap: 1px;
-    background: #ddd;
+    gap: 0; /* ✅ Kein Gap - Linien via border-top */
+    background: #fff;
     padding-bottom: 20px
 }
 
 .time-slot {
-    background: #5a6c7d;
-    color: #fff;
+    background: #fafafa;
+    color: #555;
     padding: 5px;
     text-align: center;
     font-size: 12px;
+    font-weight: 600;
     display: flex;
-    align-items: center;
-    justify-content: center
+    align-items: flex-start; /* Oben ausrichten */
+    justify-content: center;
+    padding-top: 4px;
+    border-top: 2px solid #d0d0d0 /* Gleiche Linie wie hour-line */
 }
+
+/* ========================================
+   VISUELLE GRID-HIERARCHIE
+   Sichtbare Linien nur bei timeStep-Intervallen
+   ======================================== */
 
 .calendar-cell {
     background: #fff;
     min-height: 30px;
-    border: 1px solid #e0e0e0;
+    border: none; /* Standard: Keine Linie */
     position: relative
+}
+
+/* Halbe-Stunden-Linien (subtil) */
+.calendar-cell.half-hour-line {
+    border-top: 1px solid #e8e8e8
+}
+
+/* Stündliche Linien (prominent) */
+.calendar-cell.hour-line {
+    border-top: 2px solid #d0d0d0
+}
+
+/* Tagesanfang (sehr prominent, blau) */
+.calendar-cell.day-start {
+    border-top: 3px solid #667eea
+}
+
+/* Responsive: Mobile dünnere Linien */
+@media (max-width: 768px) {
+    .calendar-cell.half-hour-line {
+        border-top: 1px solid #e0e0e0
+    }
+
+    .calendar-cell.hour-line {
+        border-top: 1px solid #bbb /* Dünner auf Mobile */
+    }
+
+    .calendar-cell.day-start {
+        border-top: 2px solid #667eea
+    }
+
+    .time-slot {
+        border-top: 1px solid #bbb;
+        font-size: 10px
+    }
 }
 
 .calendar-cell.drop-zone {
@@ -177,7 +220,10 @@ h1 {
     text-align: center;
     cursor: move;
     z-index: 5;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+    /* ✅ Verbesserter Schatten für Abgrenzung bei fehlenden Grid-Linien */
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.3),       /* Standard-Schatten */
+        inset 0 -2px 0 rgba(0, 0, 0, 0.1);  /* Subtile Bottom-Border */
     overflow: hidden;
     display: flex;
     align-items: center;

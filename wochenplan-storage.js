@@ -230,6 +230,11 @@ function loadWeekData(data) {
             // Aktivität mit aktueller Farbe verwenden
             block.activity = activity;
 
+            // ✅ NEU: Migration - füge startMinutes hinzu wenn nicht vorhanden
+            if (block.startMinutes === undefined) {
+                block.startMinutes = block.timeIndex * timeSettings.timeStep;
+            }
+
             // Block in Registry speichern
             blockRegistry[block.id] = block;
 
@@ -280,6 +285,11 @@ function loadWeek() {
                 const activity = activities.find(a => a.name === block.activity.name);
                 if (activity) {
                     block.activity = activity;
+
+                    // ✅ NEU: Migration - füge startMinutes hinzu wenn nicht vorhanden
+                    if (block.startMinutes === undefined) {
+                        block.startMinutes = block.timeIndex * timeSettings.timeStep;
+                    }
 
                     // Zeitslots blockieren (mit korrekter 5-Minuten-Kollisionserkennung)
                     const startMinutes = timeIndexToMinutes(block.timeIndex);
